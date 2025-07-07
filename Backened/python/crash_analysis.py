@@ -60,20 +60,28 @@ def run_crash_analysis(input_csv, output_dir):
     def bar_chart(series, title, xlabel, name, img_dir, horizontal=False):
         fig, ax = plt.subplots(figsize=(12, 6))
         if horizontal:
+            if name == "top_backtrace_chain":
+                series = series[::-1]
             series.plot(kind="barh", ax=ax, color="skyblue", edgecolor="black")
             ax.invert_yaxis()
         else:
             series.plot(kind="bar", ax=ax, color="steelblue", edgecolor="black")
-            ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+            plt.xticks(rotation=60, ha='right')
+
 
         ax.set_title(title)
         ax.set_xlabel(xlabel)
         ax.set_ylabel("Count")
         for p in ax.patches:
-            val = p.get_width() if horizontal else p.get_height()
-            ax.annotate(str(int(val)), (p.get_x() + p.get_width() / 2, val + 1),
+            if horizontal:
+                val = p.get_width() if horizontal else p.get_height()
+                ax.annotate(str(int(val)), (val + 10, p.get_y() + p.get_height() / 2),
+                        va='center', fontsize=9)
+            else:
+                val = p.get_height()
+                ax.annotate(str(int(val)), (p.get_x() + p.get_width() / 2, val + 1),
                         ha='center', fontsize=9)
-        fig.tight_layout()
+        fig.tight_layout(rect=[0, 0, 1, 1])
         return save_chart(fig, name, img_dir)
 
     def build_ppt(img_dir, outdir):
@@ -142,10 +150,19 @@ def run_crash_analysis(input_csv, output_dir):
         vc = libs.value_counts().nlargest(10)
         fig, ax = plt.subplots(figsize=(10, 5))
         sns.countplot(y=libs, order=vc.index, ax=ax, palette="crest")
+
+
+        for container in ax.containers:
+            for bar in container:
+                width = bar.get_width()
+                ax.annotate(f'{int(width)}', xy=(width + 5, bar.get_y() + bar.get_height() / 2),
+                    va='center', fontsize=9)
+
         ax.set_title("Top Faulting Libraries")
         ax.set_xlabel("Crash Count")
         ax.set_ylabel("Library")
         fig.tight_layout()
+
         save_chart(fig, "faulting_libraries", img_dir)
         summary["Faulting Libraries"] = vc.to_dict()
         # === Crashes by State ===

@@ -117,7 +117,7 @@ const handleSubmit = async e => {
     if (res.status !== 200 || !res.data.pptxUrl) {
       throw new Error('Invalid response from analysis');
     }
-    setAnalysisProgress(100);
+    // setAnalysisProgress(100);
     setPptUrl(res.data.pptxUrl);
     setSummaryStatus('✅ Analysis complete. Click below to view graphs.');
     setEmailStatus('');
@@ -180,21 +180,14 @@ return (
       />
     </div>
 
-    {uploadProgress === 100 && (
-      <>
-        <label>⚙️ Analyzing: {analysisProgress}%</label>
-        <div className="progress">
-          <div
-            className="progress-bar bg-warning"
-            role="progressbar"
-            style={{ width: `${analysisProgress}%` }}
-          />
-        </div>
-      </>
+    {uploadProgress === 100 && !pptUrl && (
+      <div className="text-center mt-2">
+        <label>⚙️ Analyzing, please wait...</label>
+        <div className="spinner-border text-warning ms-2" role="status" />
+      </div>
     )}
   </div>
 )}
-
 
 
     <form onSubmit={handleSubmit}>
@@ -259,7 +252,7 @@ return (
 
   <button
     className="email-send-button"
-    disabled={!to.trim()}
+    disabled={!to.trim() || !to.includes('@') || !pptUrl}
     onClick={handleEmailSend}
   >
     ✉️ Send Email
