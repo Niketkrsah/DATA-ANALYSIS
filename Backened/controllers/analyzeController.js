@@ -1,8 +1,8 @@
+const { deleteOldPPTXFiles, cleanupOldFiles, cleanupOldPPTX } = require('../utils/cleanup');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-const BASE_DIR = path.resolve(__dirname, '..');
 const PY_CMD = process.platform === 'win32' ? 'py' : 'python3';
 
 function sanitizeFilename(filename) {
@@ -13,6 +13,8 @@ function runPython(inputCsv, outputName, type, res) {
   const script = path.join(__dirname, `../python/${type}_analysis.py`);
   const outdir = path.join(__dirname, '../output/');
   const args = ['--input', inputCsv, '--outdir', outdir];
+  deleteOldPPTXFiles(outdir);
+
 
   console.log(`🔧 Spawning: ${PY_CMD} ${script} ${args.join(' ')}`);
   let stderr = '';
@@ -26,6 +28,11 @@ function runPython(inputCsv, outputName, type, res) {
   });
 
   proc.on('close', code => {
+    fs.unlink(inputCsv, err => {
+      if (err) console.error(`❌ Failed to delete uploaded file: ${inputCsv}`, err);
+      else console.log(`🗑️ Deleted uploaded file: ${inputCsv}`);
+    });
+
     if (code !== 0) {
       return res.status(500).json({ error: 'Analysis failed', details: stderr });
     }
@@ -49,33 +56,12 @@ function runPython(inputCsv, outputName, type, res) {
   });
 }
 
-// For local (server-browsed) CSV files
-exports.analyzeByPath = (req, res) => {
-  const rel = req.query.csvPath;
-  const type = req.query.type || 'crash';
 
-  if (!rel) return res.status(400).json({ error: 'csvPath required' });
-
-  const full = path.normalize(path.join(BASE_DIR, rel));
-  console.log('📁 CSV path received:', rel);
-  console.log('📄 Resolved full path:', full);
-
-  if (!full.startsWith(BASE_DIR)) {
-    return res.status(403).json({ error: 'Forbidden path' });
-  }
-
-  if (!fs.existsSync(full) || !full.endsWith('.csv')) {
-    return res.status(400).json({ error: 'Invalid or missing CSV file' });
-  }
-
-  const baseName = sanitizeFilename(path.basename(full, '.csv'));
-
-  // ✅ Corrected parameter order
-  runPython(full, baseName, type, res);
-};
 
 // For uploaded CSV files
-exports.analyzeByUpload = (req, res) => {
+exports.analyzeByUpload = async (req, res) => {
+  await cleanupOldFiles(); 
+  await cleanupOldPPTX();
   const type = req.body.type || 'crash';
 
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
@@ -92,3 +78,5 @@ exports.analyzeByUpload = (req, res) => {
   // ✅ Corrected parameter order
   runPython(uploadedPath, baseName, type, res);
 };
+
+exports.cleanupOldFiles = cleanupOldFiles;

@@ -8,18 +8,19 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 
 export default function App() {
-  const [mode,       setMode]       = useState('local');
-  const [showBrowser, setShow]     = useState(false);
-  const [currentDir, setDir]       = useState('');      
-  const [entries,    setEntries]   = useState([]);
+  const [mode,       setMode]       = useState('upload');  
   const [csvPath,    setCsvPath]   = useState('');
   const [file,       setFile]      = useState(null);
   const [loading,    setLoading]   = useState(false);
   const [pptUrl,     setPptUrl]    = useState('');
   const [summary, setSummary] = useState({});
   const [showCharts, setShowCharts] = useState(false);
-  
+
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+
   const [emailStatus, setEmailStatus] = useState('');
+  const [emailMode, setEmailMode] = useState('to');
   const [ascii, setAscii] = useState(true);
   const [table, setTable] = useState(false);
   const [images, setImages] = useState(true);
@@ -33,31 +34,6 @@ export default function App() {
   const [analysisType, setAnalysisType] = useState('crash'); // or 'anr'
 
 
-  // Load folder contents whenever modal opens or dir changes
-  useEffect(() => {
-    if (!showBrowser) return;
-    axios
-      .get('/fs/list', { params: { path: currentDir } })
-      .then(res => setEntries(res.data.files))
-      .catch(err => alert(err.message));
-  }, [showBrowser, currentDir]);
-
-  const goUp = () => {
-    if (!currentDir) return;
-    const parts = currentDir.split('/');
-    const parent = parts.length > 1 ?+ parts.slice(0, -1).join('/') : '';
-    setDir(parent);
-  };
-
- const pickItem = e => {
-    const next = currentDir ? `${currentDir}/${e.name}` : e.name;
-    if (e.type==='dir') {
-      setDir(next);
-    } else {
-      setCsvPath(next);
-      setShow(false);
-    }
-  };
 
   // email send function
   const handleEmailSend = async () => {
@@ -110,30 +86,43 @@ const handleSubmit = async e => {
   setShowCharts(false);
   setSummaryStatus('');
   setPptUrl('');
+  setUploadProgress(0);
+  setAnalysisProgress(0);
+   let interval = null;
   try {
-    let res;
- if (mode === 'local') {
-  if (!csvPath) throw new Error('No CSV path selected');
-  res = await axios.get('/analyze/local', {
-    params: { csvPath, type: analysisType }
-  });
-} else {
-  if (!file) throw new Error('No file uploaded');
-  const fm = new FormData();
-  fm.append('csv', file);
-  fm.append('type', analysisType);
-  res = await axios.post('/analyze/upload', fm, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-}
+    if (!file) throw new Error('No file uploaded');
+
+    const fm = new FormData();
+    fm.append('csv', file);
+    fm.append('type', analysisType);
+
+      interval = setInterval(() => {
+      setAnalysisProgress(prev => {
+        const next = prev + 10;
+        if (next >= 100) clearInterval(interval);
+        return next;
+      });
+    }, 100);
+
+    const res = await axios.post('/analyze/upload', fm, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (progressEvent) => {
+        const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        setUploadProgress(percent);
+      }
+    });
+
+    clearInterval(interval);
+
     if (res.status !== 200 || !res.data.pptxUrl) {
       throw new Error('Invalid response from analysis');
     }
+    setAnalysisProgress(100);
     setPptUrl(res.data.pptxUrl);
     setSummaryStatus('✅ Analysis complete. Click below to view graphs.');
     setEmailStatus('');
-    // setShowCharts(false);
   } catch (err) {
+    clearInterval(interval);
     console.error('Analysis error:', err);
     alert(`❌ ${err.message}`);
   } finally {
@@ -162,71 +151,131 @@ const handleShowCharts = async () => {
 
 return (
   <div className="container-fluid">
-    <h1 className="app-title">📊 CSV → PPTX Analyzer</h1>
-<div className="mode-selection">
-  <label className="mode-option">
-    <input
-      type="radio"
-      value="crash"
-      checked={analysisType === 'crash'}
-      onChange={() => setAnalysisType('crash')}
-    />
-    Crash Report
-  </label>
-  <label className="mode-option">
-    <input
-      type="radio"
-      value="anr"
-      checked={analysisType === 'anr'}
-      onChange={() => setAnalysisType('anr')}
-    />
-    JioSphere ANR Report
-  </label>
+    <h1 className="app-title">📊 CSV Analyzer</h1>
+<div className="selector-row">
+  <div className="selector-group">
+    <label>Select Report Type:</label>
+    <select value={analysisType} onChange={(e) => setAnalysisType(e.target.value)}>
+      <option value="anr">JioSphere ANR Report</option>
+      <option value="crash">Crash Report</option>
+    </select>
+  </div>
+
+  <div className="selector-group">
+    <label>Select Mode:</label>
+    <select value={mode} onChange={(e) => setMode(e.target.value)}>
+      <option value="upload">Upload File</option>
+    </select>
+  </div>
 </div>
 
-    <div className="mode-selection">
-      <label className="mode-option">
-        <input type="radio" value="local" checked={mode === 'local'} onChange={() => setMode('local')} />
-        Browse Server
-      </label>
-      <label className="mode-option">
-        <input type="radio" value="upload" checked={mode === 'upload'} onChange={() => setMode('upload')} />
-        Upload File
-      </label>
+{loading && (
+  <div className="progress-wrapper mt-3">
+    <label>📤 Uploading: {uploadProgress}%</label>
+    <div className="progress mb-2">
+      <div
+        className="progress-bar"
+        role="progressbar"
+        style={{ width: `${uploadProgress}%` }}
+      />
     </div>
 
-    <form onSubmit={handleSubmit}>
-      {mode === 'local' ? (
-        <div>
-          <button type="button" className="browse-button" onClick={() => setShow(true)}>
-            {csvPath ? 'Change CSV…' : 'Browse Server…'}
-          </button>
-          {csvPath && (
-            <div className="selected-path">
-              Selected: <code>{csvPath}</code>
-            </div>
-          )}
+    {uploadProgress === 100 && (
+      <>
+        <label>⚙️ Analyzing: {analysisProgress}%</label>
+        <div className="progress">
+          <div
+            className="progress-bar bg-warning"
+            role="progressbar"
+            style={{ width: `${analysisProgress}%` }}
+          />
         </div>
-      ) : (
-        <input type="file" accept=".csv" onChange={e => setFile(e.target.files[0])} />
-      )}
+      </>
+    )}
+  </div>
+)}
 
-      <button type="submit" className="submit-button" disabled={loading || (mode === 'local' ? !csvPath : !file)}>
+
+
+    <form onSubmit={handleSubmit}>
+        <input type="file" accept=".csv" onChange={e => setFile(e.target.files[0])} />
+      <button type="submit" className="submit-button" disabled={loading ||!file}>
         {loading ? 'Analyzing…' : 'Start Analysis'}
       </button>
     </form>
 
-    {pptUrl && (
+  {summaryStatus && (
+      <p className="text-success text-center mt-3">{summaryStatus}</p>
+    )}
+
+   
+<div className="email-section-container">
+  <h3 className="email-heading">📧 Send Report via Email</h3>
+
+  <div className="email-checkbox-group">
+    <label><input type="checkbox" checked={ascii} onChange={() => setAscii(!ascii)} /> ASCII Graphs</label>
+    <label><input type="checkbox" checked={table} onChange={() => setTable(!table)} /> Summary Tables</label>
+    <label><input type="checkbox" checked={images} onChange={() => setImages(!images)} /> Graph Images</label>
+    <label><input type="checkbox" checked={ppt} onChange={() => setPpt(!ppt)} /> PowerPoint Presentation</label>
+  </div>
+
+  {/* Selector for email mode */}
+  <div className="email-mode-selector">
+    <label>Select Email Mode: </label>
+    <select value={emailMode} onChange={e => setEmailMode(e.target.value)} className="email-mode-dropdown">
+      <option value="to">To Only</option>
+      <option value="to-cc">To + CC</option>
+      <option value="to-cc-bcc">To + CC + BCC</option>
+    </select>
+  </div>
+
+  <div className="email-input-group">
+    <input
+      type="email"
+      className="email-input"
+      placeholder="To: user1@example.com, user2@example.com"
+      value={to}
+      onChange={e => setTo(e.target.value)}
+    />
+    {(emailMode === 'to-cc' || emailMode === 'to-cc-bcc') && (
+      <input
+        type="email"
+        className="email-input"
+        placeholder="CC: optional1@example.com, optional2@example.com"
+        value={cc}
+        onChange={e => setCc(e.target.value)}
+      />
+    )}
+    {emailMode === 'to-cc-bcc' && (
+      <input
+        type="email"
+        className="email-input"
+        placeholder="BCC: hidden1@example.com, hidden2@example.com"
+        value={bcc}
+        onChange={e => setBcc(e.target.value)}
+      />
+    )}
+  </div>
+
+  <button
+    className="email-send-button"
+    disabled={!to.trim()}
+    onClick={handleEmailSend}
+  >
+    ✉️ Send Email
+  </button>
+
+  {emailStatus && <p className="email-status">{emailStatus}</p>}
+</div>
+
+ {pptUrl && (
       <div className="download-link">
         <a href={pptUrl} target="_blank" rel="noopener noreferrer">📥 Download Presentation</a>
       </div>
     )}
 
-    {summaryStatus && (
-      <p className="text-success text-center mt-3">{summaryStatus}</p>
-    )}
 
-    {pptUrl && summaryStatus && (
+  {pptUrl && summaryStatus && (
       <div className="text-center mt-3">
         <button
           className="btn btn-primary"
@@ -237,72 +286,6 @@ return (
         </button>
       </div>
     )}
-
-    {showBrowser && (
-      <>
-        <div className="modal-overlay" onClick={() => setShow(false)} />
-        <div className="modal-box">
-          <div className="modal-header">
-            <button className="modal-up-button" onClick={goUp} disabled={!currentDir}>↑ Up</button>
-            <span className="modal-path">{currentDir || '/'}</span>
-            <button className="modal-close-button" onClick={() => setShow(false)}>✕</button>
-          </div>
-          <ul className="file-list">
-            {entries.map(e => (
-              <li key={e.name} className="file-item">
-                <button className="file-button" onClick={() => pickItem(e)}>
-                  {e.type === 'dir' ? '📁' : '📄'} {e.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </>
-    )}
-
-    <div className="email-section">
-      <h3 className="email-heading">📧 Send Report via Email</h3>
-      <div className="email-options">
-        <label>
-          <input type="checkbox" checked={ascii} onChange={() => setAscii(!ascii)} /> ASCII Graphs
-        </label>
-        <label>
-          <input type="checkbox" checked={table} onChange={() => setTable(!table)} /> Summary Tables
-        </label>
-        <label>
-          <input type="checkbox" checked={images} onChange={() => setImages(!images)} /> Graph Images
-        </label>
-        <label>
-          <input type="checkbox" checked={ppt} onChange={() => setPpt(!ppt)} /> PowerPoint Presentation
-        </label>
-      </div>
-      <input
-        type="text"
-        className="email-input"
-        placeholder="To: user1@example.com, user2@example.com"
-        value={to}
-        onChange={e => setTo(e.target.value)}
-      />
-      <input
-        type="text"
-        className="email-input"
-        placeholder="CC: optional1@example.com, optional2@example.com"
-        value={cc}
-        onChange={e => setCc(e.target.value)}
-      />
-      <input
-        type="text"
-        className="email-input"
-        placeholder="BCC: hidden1@example.com, hidden2@example.com"
-        value={bcc}
-        onChange={e => setBcc(e.target.value)}
-      />
-      
-      <button className="email-send-button" disabled={!to.trim()} onClick={handleEmailSend}>
-        Send Email
-      </button>
-      {emailStatus && <p className="email-status">{emailStatus}</p>}
-    </div>
 
   {showCharts && Object.keys(summary).length > 0 && (
   <Container fluid className="mt-4">

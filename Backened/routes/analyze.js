@@ -2,7 +2,7 @@ const express = require('express');
 const multer  = require('multer');
 const fs      = require('fs');
 const path    = require('path');
-const { analyzeByPath, analyzeByUpload } = require('../controllers/analyzeController');
+const { analyzeByUpload } = require('../controllers/analyzeController');
 
 const router   = express.Router();
 const BASE_DIR = path.resolve(__dirname, '..');
@@ -37,23 +37,6 @@ function validateType(req, res, next) {
 }
 
 // Main endpoints
-router.get('/local', validateType, analyzeByPath);
 router.post('/upload', upload.single('csv'), validateType, analyzeByUpload);
-
-// Optional debug route
-router.get('/test-path', (req, res) => {
-  const rel = req.query.csvPath;
-  if (!rel) return res.status(400).json({ error: 'csvPath required' });
-
-  const full = path.normalize(path.join(BASE_DIR, rel));
-  if (!full.startsWith(BASE_DIR)) {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
-
-  fs.stat(full, (err, stats) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ fullPath: full, isFile: stats.isFile(), size: stats.size });
-  });
-});
 
 module.exports = router;

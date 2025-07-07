@@ -8,7 +8,6 @@ export default defineConfig({
 proxy: {
   '/analyze': 'http://localhost:3000',
   '/download': 'http://localhost:3000',
-  '/fs': 'http://localhost:3000',
   '/email': 'http://localhost:3000',
   '/output': 'http://localhost:3000'
 

@@ -1,0 +1,79 @@
+{
+  "Top ANR Activities": {
+    "com.jio.yt/dev.cobalt.app.MainActivity": 3616,
+    "com.iwedia.ui.rjio.launcher.reliance/com.iwedia.ui.rjio.launcher.ui.intro.IntroActivity": 1
+  },
+  "ANR by App Version": {
+    "7.0.0.6": 3274,
+    "5.2.1.0": 346,
+    "4.1.8": 1
+  },
+  "ANR by State": {
+    "Tehsil": 760,
+    "Delhi": 72,
+    "Hyderabad": 58,
+    "Bangalore": 50,
+    "Kolkata": 49,
+    "Agra": 31,
+    "Pune": 27,
+    "Jaipur": 24,
+    "Amritsar": 20,
+    "Kanpur": 20
+  },
+  "ANR by Hour": {
+    "0": 23,
+    "1": 8,
+    "2": 4,
+    "3": 3,
+    "4": 6,
+    "5": 18,
+    "6": 59,
+    "7": 139,
+    "8": 231,
+    "9": 255,
+    "10": 233,
+    "11": 251,
+    "12": 217,
+    "13": 220,
+    "14": 231,
+    "15": 229,
+    "16": 217,
+    "17": 241,
+    "18": 223,
+    "19": 224,
+    "20": 263,
+    "21": 181,
+    "22": 92,
+    "23": 53
+  },
+  "Available Memory Ranges": {
+    "0–200 MB": 0,
+    "200–400 MB": 5,
+    "400–600 MB": 388,
+    "600–800 MB": 2057,
+    "800–1000 MB": 1130,
+    "1000–1200 MB": 24,
+    "1200–2000 MB": 13
+  },
+  "Simplified ANR Subjects": {
+    "Input dispatching timed out": 3617,
+    "executing service com.jio.yt/androidx.core.app.Jio\nAnalyticsIntentService": 3,
+    "Broadcast of Intent {\nact=android.intent.action.DATE_CHANGED\nflg=0x20200010 }": 1
+  },
+  "Top 5 STB Series": {
+    "JioSTB-JMSC200A-22.1.09": 1580,
+    "JioSTB-JMSD200A-22.1.09": 1099,
+    "JioSTB-JMSB200A-22.1.09": 842,
+    "JioSTB-JMSC200A-23.1.11": 36,
+    "JioSTB-JMSK200A-22.1.09": 33
+  },
+  "Customer Product Types": {
+    "AirFiber-SUB6": 3044,
+    "AirFiber-UBR": 539,
+    "FTTH": 38
+  },
+  "No Focused Window": {
+    "No Focused Window": 2112,
+    "Other Subjects": 1509
+  }
+}

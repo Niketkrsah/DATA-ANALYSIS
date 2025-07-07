@@ -38,18 +38,30 @@ def run_anr_analysis(input_csv, output_dir):
         return path
 
     def bar_plot(series, title, name, img_dir, horizontal=False):
-        fig, ax = plt.subplots(figsize=(10, 6))
+        import textwrap
+        series.index = ['\n'.join(textwrap.wrap(str(label), width=50)) for label in series.index]
+        fig, ax = plt.subplots(figsize=(15, 6))
         if horizontal:
             series.plot(kind="barh", ax=ax, color="skyblue")
             ax.invert_yaxis()
+            for p in ax.patches:
+               val = p.get_width()
+               ax.annotate(str(int(val)), (p.get_x() + val + 5, p.get_y() + p.get_height() / 2),
+                            ha='left', va='center', fontsize=9)
         else:
             series.plot(kind="bar", ax=ax, color="steelblue")
             ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+            for p in ax.patches:
+                val = p.get_height()
+                ax.annotate(str(int(val)), (p.get_x() + p.get_width() / 2, val + 1),
+                            ha='center', fontsize=9)
+
         ax.set_title(title)
-        for p in ax.patches:
-            val = p.get_width() if horizontal else p.get_height()
-            ax.annotate(str(int(val)), (p.get_x() + p.get_width() / 2, val + 1),
-                        ha='center', fontsize=9)
+        # for p in ax.patches:
+        #     val = p.get_width() if horizontal else p.get_height()
+        #     ax.annotate(str(int(val)), (p.get_x() + p.get_width() / 2, val + 1),
+        #                 ha='center', fontsize=9)
+
         fig.tight_layout(pad=3.0)
         return save_chart(fig, name, img_dir)
 

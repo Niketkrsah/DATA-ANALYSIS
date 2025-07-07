@@ -42,13 +42,7 @@
 }
 
 
-/* ======= Container & Titles ======= */
-/* .app-container {
-  padding: 20px;
-  font-family: sans-serif;
-  max-width: 600px;
-  margin: 0 auto;
-} */
+
 
 .app-title {
   font-size: 24px;
@@ -56,7 +50,7 @@
   font-weight: bold;
 }
 
-/* ======= Mode Selection (Radio Buttons) ======= */
+/* ======= Mode Selection (Radio Buttons) =======
 .mode-selection {
   margin-bottom: 20px;
 }
@@ -64,7 +58,7 @@
 .mode-option {
   margin-right: 20px;
   font-size: 16px;
-}
+} */
 
 /* ======= Browse Button & Submit ======= */
 .browse-button,
@@ -218,7 +212,7 @@
 }
 
 /* ======= Email Section ======= */
-.email-section {
+/* .email-section {
   margin-top: 40px;
 }
 
@@ -270,6 +264,123 @@
 .email-options label {
   font-size: 14px;
 }
+*/
+
+
+.email-section-container {
+  max-width: 720px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.email-heading {
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.email-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.email-checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 500;
+  font-size: 1rem;
+  flex: 1 1 45%;
+  cursor: pointer;
+}
+
+.email-input-group {
+  display: flex;
+  flex-direction: row;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+.email-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+.email-input {
+  width: 8cm;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  padding-left: 36px;
+}
+
+.email-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  outline: none;
+}
+
+.email-send-button {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.email-send-button:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.email-send-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.email-status {
+  margin-top: 1rem;
+  text-align: center;
+  font-weight: 500;
+  color: #155724;
+}
+.email-mode-selector {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.email-mode-dropdown {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background-color: aliceblue;
+  color:blue;
+}
+
 
 
 body {
@@ -301,3 +412,39 @@ h2 {
   display: flex;
   justify-content: center;
 } */
+
+.selector-row {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.selector-group {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+
+.selector-group label {
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+}
+
+.selector-group select {
+  width: 220px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  background-color: aliceblue;
+  color:blue;
+  border-radius: 6px;
+}
+
+.progress-wrapper {
+  margin-top: 10px;
+  text-align: center;
+  font-weight: bold;
+  color: #333;
+}
