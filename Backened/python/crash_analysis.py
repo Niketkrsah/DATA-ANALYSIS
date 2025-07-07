@@ -99,27 +99,27 @@ def run_crash_analysis(input_csv, output_dir):
     summary = {}
 
 
-    # # === Parse Crash Process Logs ===
-    # parsed = parse_structured_crash_logs(df)
+    # === Parse Crash Process Logs ===
+    parsed = parse_structured_crash_logs(df)
 
-    # if not parsed.empty:
-    #     if "Signal Name" in parsed:
-    #         vc = parsed["Signal Name"].value_counts()
-    #         bar_chart(vc, "Crash Frequency by Signal", "Signal", "signal_freq", img_dir)
-    #         summary["Crash Frequency by Signal"] = vc.to_dict()
+    if not parsed.empty:
+        if "Signal Name" in parsed:
+            vc = parsed["Signal Name"].value_counts()
+            bar_chart(vc, "Crash Frequency by Signal", "Signal", "signal_freq", img_dir)
+            summary["Crash Frequency by Signal"] = vc.to_dict()
 
-    #     if "Error Name" in parsed:
-    #         vc = parsed["Error Name"].value_counts()
-    #         bar_chart(vc, "Top Error Types", "Error", "error_types", img_dir)
-    #         summary["Top Error Types"] = vc.to_dict()
+        if "Error Name" in parsed:
+            vc = parsed["Error Name"].value_counts()
+            bar_chart(vc, "Top Error Types", "Error", "error_types", img_dir)
+            summary["Top Error Types"] = vc.to_dict()
 
-    #     if "Libraries (Backtrace)" in parsed:
-    #         vc = parsed["Libraries (Backtrace)"].value_counts().head(10)
-    #         bar_chart(vc, "Top Backtrace Chains", "Backtrace", "top_backtrace_chain", img_dir, horizontal=True)
-    #         summary["Top Backtrace Chains"] = vc.to_dict()
+        if "Libraries (Backtrace)" in parsed:
+            vc = parsed["Libraries (Backtrace)"].value_counts().head(10)
+            bar_chart(vc, "Top Backtrace Chains", "Backtrace", "top_backtrace_chain", img_dir, horizontal=True)
+            summary["Top Backtrace Chains"] = vc.to_dict()
 
-    #     parsed["Timestamp"] = pd.to_datetime(parsed["Timestamp"], errors="coerce", utc=True)
-    #     parsed.to_csv(os.path.join(output_dir, "parsed_crash_info.csv"), index=False)
+        parsed["Timestamp"] = pd.to_datetime(parsed["Timestamp"], errors="coerce", utc=True)
+        # parsed.to_csv(os.path.join(output_dir, "parsed_crash_info.csv"), index=False)
 
     # === Additional Visuals ===
     if "Di 8" in df.columns:
