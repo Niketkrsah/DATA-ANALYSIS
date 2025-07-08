@@ -1,4 +1,3 @@
-// frontend/src/App.jsx
 import React,{ useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css'; 
@@ -7,8 +6,10 @@ import ChartCard from './components/ChartCard';
 import 'bootstrap/dist/css/bootstrap.min.css'; 
 import { Modal, Button } from 'react-bootstrap';
 
-
+// App Component - Main entry point of the application
 export default function App() {
+
+  // ----------------- STATE VARIABLES -----------------
   const [mode,       setMode]       = useState('upload');  
   const [csvPath,    setCsvPath]   = useState('');
   const [file,       setFile]      = useState(null);
@@ -21,10 +22,11 @@ export default function App() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [sessionId, setSessionId] = useState('');
   const [emailStatus, setEmailStatus] = useState('');
-const [sendingEmail, setSendingEmail] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+
   const [showEmailModal, setShowEmailModal] = useState(false);
-const openEmailModal = () => setShowEmailModal(true);
-const closeEmailModal = () => setShowEmailModal(false);
+  const openEmailModal = () => setShowEmailModal(true);
+  const closeEmailModal = () => setShowEmailModal(false);
 
   const [emailMode, setEmailMode] = useState('to');
   const [message, setMessage] = useState('');
@@ -40,14 +42,14 @@ const closeEmailModal = () => setShowEmailModal(false);
   const [summaryStatus, setSummaryStatus] = useState('');
   const [analysisType, setAnalysisType] = useState('crash'); 
 
+
+// Default message body for the email
 const defaultEmailMessage = `Hello sir,\nI am writing to submit the analysis of the provided CSV file. I have reviewed the data and compiled insights which I believe will be useful for your evaluation. PFA.\n Best Regards,\n<strong>Jio Team </strong>`
 
 
 
 
-
-
-  // email send function
+// ----------------- EMAIL HANDLER -----------------
   const handleEmailSend = async () => {
   if (!to.trim()) {
     alert('Please enter at least one recipient email.');
@@ -71,10 +73,10 @@ const defaultEmailMessage = `Hello sir,\nI am writing to submit the analysis of 
     return;
   }
 
-
   // Prepare email data
   setEmailStatus('Sending...');
   setSendingEmail(true);
+
   try {
     const res = await axios.post('/email/send', {
       to,
@@ -98,16 +100,14 @@ const defaultEmailMessage = `Hello sir,\nI am writing to submit the analysis of 
     console.error('Email send error:', err);
     setEmailStatus(err.response?.data?.error || 'Failed to send email');
   } finally {
-    setSendingEmail(false); // ✅ re-enable the button
+    setSendingEmail(false); // re-enable the button
   }
 };
 
 
 
 
-
-
-
+ // ----------------- SUBMIT HANDLER -----------------
 const handleSubmit = async e => {
   e.preventDefault();
   setLoading(true);
@@ -117,7 +117,7 @@ const handleSubmit = async e => {
   setPptUrl('');
   setUploadProgress(0);
   setAnalysisProgress(0);
-   let interval = null;
+  let interval = null;
   try {
     if (!file) throw new Error('No file uploaded');
 
@@ -125,6 +125,7 @@ const handleSubmit = async e => {
     fm.append('csv', file);
     fm.append('type', analysisType);
 
+    // Simulate analysis progress animation
       interval = setInterval(() => {
       setAnalysisProgress(prev => {
         const next = prev + 10;
@@ -133,6 +134,7 @@ const handleSubmit = async e => {
       });
     }, 100);
 
+    // Send file to backend for analysis
     const res = await axios.post('/analyze/upload', fm, {
       headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress: (progressEvent) => {
@@ -144,8 +146,8 @@ const handleSubmit = async e => {
     clearInterval(interval);
 
     if (res.status !== 200 || !res.data.pptxUrl || !res.data.sessionId) {
-  throw new Error('Invalid response from analysis');
-}
+    throw new Error('Invalid response from analysis');
+    }
 
     setPptUrl(res.data.pptxUrl);
     setFilename(file.name); // Save original filename
@@ -154,21 +156,21 @@ const handleSubmit = async e => {
     setEmailStatus('');
 
 // ✅ Immediately fetch and show summary
-      try {
-  const res2 = await axios.get(`/download/${res.data.sessionId}/${analysisType}_summary.json`);
-  const data = res2.data;
-  if (data && data.status === 'success' && typeof data.summary === 'object') {
-    setSummary(data.summary);
-    setShowCharts(true);
+  try {
+    const res2 = await axios.get(`/download/${res.data.sessionId}/${analysisType}_summary.json`);
+    const data = res2.data;
+    if (data && data.status === 'success' && typeof data.summary === 'object') {
+      setSummary(data.summary);
+      setShowCharts(true);
   } else {
-    throw new Error('Invalid summary format');
+      throw new Error('Invalid summary format');
   }
-      } catch (err) {
+  } catch (err) {
   console.error('Failed to load summary:', err);
   alert('❌ Could not load summary data.');
-      }
+   }
     
-  } catch (err) {
+} catch (err) {
     clearInterval(interval);
     console.error('Analysis error:', err);
     alert(`❌ ${err.message}`);
@@ -181,15 +183,10 @@ const handleSubmit = async e => {
 
 
 
-
-
-//show chart
+// ----------------- LOAD CHART DATA -----------------
 const handleShowCharts = async () => {
   try {
     const res = await axios.get(`/download/${sessionId}/${analysisType}_summary.json`);
-    // console.log('📦 Summary response:', res.data);
-
-    // Accept any non-null object
     if (res.status === 200 && res.data && typeof res.data === 'object' && !Array.isArray(res.data)) {
       setSummary(res.data);
       setShowCharts(true);
@@ -206,10 +203,7 @@ const handleShowCharts = async () => {
 
 
 
-
-
-
-
+ // ----------------- JSX RENDER -----------------
 return (
   <div className="container-fluid">
     <h1 className="app-title">📊 CSV Analyzer</h1>

@@ -35,8 +35,8 @@ function generateAsciiBarChart(data, title) {
 function generateHtmlTable(data, title) {
   if (typeof data !== 'object' || Array.isArray(data)) return '';
 
-  let table = `<h3>${title}</h3><table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse;">`;
-  table += '<tr><th>Key</th><th>Value</th></tr>';
+  let table = `<table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse;">`;
+  table += `<tr><th>${title}</th><th>Value</th></tr>`;
   for (const [key, value] of Object.entries(data)) {
     table += `<tr><td>${key}</td><td>${value}</td></tr>`;
   }

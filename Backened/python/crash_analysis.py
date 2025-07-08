@@ -129,7 +129,7 @@ def run_crash_analysis(input_csv, output_dir):
         parsed["Timestamp"] = pd.to_datetime(parsed["Timestamp"], errors="coerce", utc=True)
         # parsed.to_csv(os.path.join(output_dir, "parsed_crash_info.csv"), index=False)
 
-    # === Additional Visuals ===
+    # === STB Serial and Model Information ===
     if "Di 8" in df.columns:
         vc = df["Di 8"].value_counts().nlargest(10)
         bar_chart(vc, "Top 10 STB Serial Numbers", "STB Serial No", "STB_Serial_NO", img_dir)
@@ -165,12 +165,15 @@ def run_crash_analysis(input_csv, output_dir):
 
         save_chart(fig, "faulting_libraries", img_dir)
         summary["Faulting Libraries"] = vc.to_dict()
-        # === Crashes by State ===
+
+    # === Crashes by State ===
     if "State" in df.columns:
         vc = df["State"].value_counts()
         bar_chart(vc, "Crashes by State", "State", "by_state", img_dir)
         summary["Crashes by State"] = vc.to_dict()
 
+
+# ─────────────── Export Outputs ───────────────
 
     # === Save JSON + PPT ===
     with open(summary_path, "w", encoding="utf-8") as f:
@@ -178,6 +181,7 @@ def run_crash_analysis(input_csv, output_dir):
             "status": "success",
         "summary": summary },f, indent=2, ensure_ascii=False)
 
+    # Build PowerPoint with charts
     build_ppt(img_dir, output_dir)
 
 

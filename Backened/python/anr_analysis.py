@@ -88,17 +88,24 @@ def run_anr_analysis(input_csv, output_dir):
 
     img_dir, ppt_path, json_path = ensure_dirs(output_dir)
 
+
+# ─────────────── Load and Preprocess CSV ───────────────
     df = pd.read_csv(input_csv)
+
+    # Extract key fields using regex
     df["ANR Activity"] = df["ANR Process Info"].apply(lambda x: extract_field(r'Activity:\s+([^\s]+)', x))
     df["Subject"] = df["ANR Process Info"].apply(lambda x: extract_field(r'Subject:\s+(.*?)\s+Build:', x))
     df["Event Hour"] = pd.to_datetime(df["Event Time"], errors='coerce').dt.hour
     df["Available Memory"] = df["Mi 4"].apply(lambda x: extract_json_field(x, "available"))
 
+# Categorize memory into bins
     bins = [0, 200, 400, 600, 800, 1000, 1200, 2000]
     labels = ['0–200 MB', '200–400 MB', '400–600 MB', '600–800 MB', '800–1000 MB', '1000–1200 MB', '1200–2000 MB']
     df["Memory Range"] = pd.cut(df["Available Memory"], bins=bins, labels=labels, right=False)
 
     summary = {}
+
+ # ─────────────── Charts + Summary ───────────────
 
     summary["Top ANR Activities"] = df["ANR Activity"].value_counts().nlargest(10).to_dict()
     bar_plot(pd.Series(summary["Top ANR Activities"]), "Top 10 ANR Activities", "top_anr_activities", img_dir, horizontal=True)
@@ -109,6 +116,7 @@ def run_anr_analysis(input_csv, output_dir):
     summary["ANR by State"] = df["Gis City"].value_counts().nlargest(10).to_dict()
     bar_plot(pd.Series(summary["ANR by State"]), "Top 10 States with ANRs", "anr_by_state", img_dir)
 
+   # ANR count by hour
     hourly = df["Event Hour"].value_counts().sort_index()
     fig, ax = plt.subplots(figsize=(10, 6))
     hourly.plot(kind="line", marker='o', ax=ax, color="blue")
@@ -120,15 +128,18 @@ def run_anr_analysis(input_csv, output_dir):
     save_chart(fig, "anr_by_hour", img_dir)
     summary["ANR by Hour"] = hourly.to_dict()
 
+  # Available memory analysis
     mem_range_counts = df["Memory Range"].value_counts().sort_index()
     bar_plot(mem_range_counts, "ANR Count by Available Memory Range (Mi 4)", "mi4_available_memory_ranges", img_dir)
     summary["Available Memory Ranges"] = mem_range_counts.to_dict()
 
+  # Subject error type extraction
     df["Clean Subject"] = df["ANR Process Info"].apply(lambda text: extract_field(r'Subject:\s*(.*?)(?:\(|Build:|$)', text))
     vc = df["Clean Subject"].value_counts().nlargest(10)
     bar_plot(vc, "Top ANR ERROR TYPE (Simplified)", "anr_subject_simplified", img_dir, horizontal=True)
     summary["Simplified ANR Subjects"] = vc.to_dict()
 
+# STB firmware analysis
     if "Di 9" in df.columns:
         top_stb_series = df["Di 9"].value_counts().nlargest(5)
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -146,18 +157,22 @@ def run_anr_analysis(input_csv, output_dir):
         save_chart(fig, "top_5_stb_series_vertical", img_dir)
         summary["Top 5 STB Series"] = top_stb_series.to_dict()
 
+ # Customer product types
     if "D Customer Product Type" in df.columns:
         df.rename(columns={"D Customer Product Type": "Customer Product Type"}, inplace=True)
         vc = df["Customer Product Type"].value_counts().nlargest(5)
         bar_plot(vc, "Top 5 Customer Product Types by ANR Count", "top_5_customer_product_types", img_dir)
         summary["Customer Product Types"] = vc.to_dict()
 
+    # Focused window issue detection
     focused_window_issues = df["Subject"].dropna().str.contains("does not have a focused window", case=False)
     count = int(focused_window_issues.sum())
     summary["No Focused Window"] = {
     "No Focused Window": count,
     "Other Subjects": int(len(df) - count)
     }
+
+     # Pie chart for focused window
     labels = ['No Focused Window', 'Other Subjects']
     sizes = [count, len(df) - count]
     fig, ax = plt.subplots(figsize=(6, 6))
@@ -166,12 +181,19 @@ def run_anr_analysis(input_csv, output_dir):
     fig.tight_layout()
     save_chart(fig, "focused_window_anrs", img_dir)
 
+
+    # ─────────────── Export Outputs ───────────────
+
+    # Write JSON summary
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump({
             "status": "success",
             "summary": summary}, f, indent=2, ensure_ascii=False)
 
+    # Build PowerPoint with charts
     build_ppt(img_dir, ppt_path)
+
+# ─────────────── CLI Support ───────────────    
 
 if __name__ == "__main__":
     import argparse

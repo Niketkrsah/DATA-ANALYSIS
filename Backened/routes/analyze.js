@@ -25,16 +25,55 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 2 * 1024 * 1024 * 1024 // 2GB max
+  },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext !== '.csv') {
+      return cb(new Error('❌ Only CSV files are allowed.'));
+    }
+    cb(null, true);
+  }
+});
+
 
 function validateType(req, res, next) {
   const type = req.query.type || req.body?.type || 'crash';
+
   if (!['crash', 'anr'].includes(type)) {
     return res.status(400).json({ error: 'Invalid analysis type. Must be "crash" or "anr".' });
   }
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
+
+  if (req.file.size === 0) {
+    return res.status(400).json({ error: 'Uploaded file is empty.' });
+  }
+
   next();
 }
 
-router.post('/upload', upload.single('csv'), validateType, analyzeByUpload);
+
+router.post('/upload', (req, res, next) => {
+  upload.single('csv')(req, res, function (err) {
+    if (err instanceof multer.MulterError) {
+
+      // A Multer error occurred when uploading
+      return res.status(400).json({ error: `Upload error: ${err.message}` });
+    } else if (err) {
+
+      // An unknown error occurred
+      return res.status(400).json({ error: err.message });
+    }
+    next(); // Proceed if no error
+  });
+}, validateType, analyzeByUpload);
+
 
 module.exports = router;

@@ -1,3 +1,16 @@
+/* ----------------------------- Root Layout ----------------------------- */
+:root {
+  --primary: #007bff;
+  --secondary: #ccc;
+  --text-dark: #000;
+  --text-muted: #666;
+  --text-blue: blue;
+  --bg-light: aliceblue;
+  --font-base: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-size-base: 1rem;
+  --border-radius: 6px;
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -5,79 +18,41 @@
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+body {
+  background-color: #f8f9fa;
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: var(--font-base);
+  font-weight: 400;
+  line-height: 1.5;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
-
-
-
+/* ----------------------------- Typography ----------------------------- */
 .app-title {
   font-size: 24px;
   margin-bottom: 20px;
   font-weight: bold;
 }
 
-/* ======= Mode Selection (Radio Buttons) =======
-.mode-selection {
-  margin-bottom: 20px;
+h2 {
+  font-weight: 600;
 }
 
-.mode-option {
-  margin-right: 20px;
-  font-size: 16px;
-} */
-
-/* ======= Browse Button & Submit ======= */
-.browse-button,
+/* ----------------------------- Buttons ----------------------------- */
 .submit-button {
   margin-top: 20px;
   padding: 10px 20px;
+  font-size: var(--font-size-base);
   border: none;
-  cursor: pointer;
   border-radius: 4px;
-  font-size: 16px;
-}
-
-.browse-button {
-  background-color: #6c757d;
-  color: #fff;
-}
-
-.submit-button {
-  background-color: #007bff;
+  cursor: pointer;
+  background-color: var(--primary);
   color: #fff;
 }
 
@@ -86,21 +61,14 @@
   cursor: not-allowed;
 }
 
-/* ======= Selected CSV Path ======= */
-.selected-path {
-  margin-top: 10px;
-  font-family: monospace;
-  color: #444;
-}
-
-/* ======= Download Link ======= */
+/* ----------------------------- Download Link ----------------------------- */
 .download-link {
   margin-top: 30px;
 }
 
 .download-link a {
   font-weight: bold;
-  color: #007bff;
+  color: var(--primary);
   text-decoration: none;
 }
 
@@ -108,163 +76,12 @@
   text-decoration: underline;
 }
 
-/* ======= Modal Overlay and Box ======= */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.4);
-  z-index: 1000;
-}
-
-.modal-box {
-  position: fixed;
-  top: 10%;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 400px;
-  max-height: 80%;
-  overflow-y: auto;
-  z-index: 1001;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-
-/* ======= Modal Header ======= */
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.modal-up-button {
-  padding: 6px 10px;
-  font-size: 14px;
-  color: black;
-  background-color: #c9edde;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.modal-up-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;  
-}
-
-.modal-path {
-  margin-left: 10px;
-  font-weight: bold;
-}
-
-.modal-close-button {
-  border: none;
-  background: none;
-  font-size: 20px;
-  cursor: pointer;
-}
-.selected-path {
-  margin-top: 10px;
-  font-family: monospace;
-  color: #e0e0e0; /* or #ffffff for full white */
-  font-size: 14px;
-  word-break: break-all; /* good for long filenames */
-}
-
-/* ======= File List ======= */
-.file-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.file-item {
-  margin-bottom: 4px;
-}
-
-.file-button {
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: none;
-  padding: 6px 8px;
-  cursor: pointer;
-  font-size: 16px;
-  color: #333;       /* Make sure text is visible */
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-
-
-.chart-scroll-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-.chart-inner {
-  min-width: 300px;      /* Ensure scroll when chart is wide */
-  width: 100%;
-  height: 350px;
-  position: relative;
-}
-
-@media (max-width: 768px) {
-  .chart-inner {
-    min-width: 400px;
-    height: 280px;
-  }
-}
-
-.chart-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: center;
-  margin-bottom: 2rem;
-}
-
-.chart-container {
-  flex: 1 1 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  padding: 1rem;
-  box-sizing: border-box;
-}
-
-
-/* .email-section-container {
-  max-width: 700px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-} */
-
-.email-heading {
-  text-align: center;
-  font-size: 1.6rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: #333;
-}
-
+/* ----------------------------- Email Section ----------------------------- */
 .email-checkbox-group {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap:5px;
+  gap: 5px;
   margin-bottom: 1.5rem;
 }
 
@@ -273,119 +90,76 @@
   align-items: center;
   gap: 0.2rem;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   flex: 1 1 45%;
   cursor: pointer;
 }
 
 .email-input-group {
   display: flex;
-  flex-direction: row;
   flex-direction: column;
   gap: 5px;
   margin-bottom: 1.5rem;
-  position: relative;
-}
-.email-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #666;
 }
 
-.email-input {
+.email-input,
+.email-mode-dropdown {
   width: 8cm;
   padding: 5px 14px;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background-color: aliceblue;
-  color:black;
-  transition: all 0.2s ease;
-  padding-left: 36px;
+  font-size: var(--font-size-base);
+  border: 1px solid var(--secondary);
+  border-radius: var(--border-radius);
+  background-color: var(--bg-light);
+  color: var(--text-blue);
 }
 
-.email-input:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
-  outline: none;
-}
-
-.email-send-button {
+.email-message-textarea {
   width: 100%;
-  padding: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.3s ease;
+  padding: 10px;
+  font-size: var(--font-size-base);
+  border: 1px solid var(--secondary);
+  border-radius: var(--border-radius);
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+  resize: vertical;
+  margin-top: 8px;
 }
 
-.email-send-button:hover:not(:disabled) {
-  background-color: #218838;
+.word-count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: 4px;
 }
 
-.email-send-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.email-status {
-  margin-top: 1rem;
-  text-align: center;
-  font-weight: 500;
-  color: #155724;
-}
 .email-mode-selector {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.email-mode-dropdown {
-  padding: 6px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
   font-size: 0.95rem;
-  background-color: aliceblue;
-  color:blue;
+  margin: 1rem 0;
 }
 
-
-
-body {
-  background-color: #f8f9fa;
-}
-
-h2 {
-  font-weight: 600;
-}
-
-.text-success {
+.email-status {
   font-weight: 500;
-  color: #198754;
+  color: #155724;
+  text-align: center;
+  margin-top: 1rem;
 }
 
-
+/* ----------------------------- Selectors ----------------------------- */
 .selector-row {
   display: flex;
-  gap: 2rem;
   justify-content: center;
   align-items: center;
+  gap: 2rem;
   margin-bottom: 1rem;
 }
 
 .selector-group {
   display: flex;
   flex-direction: column;
-  align-items: start;
+  align-items: flex-start;
 }
 
 .selector-group label {
@@ -396,40 +170,28 @@ h2 {
 .selector-group select {
   width: 220px;
   padding: 8px 12px;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  background-color: aliceblue;
-  color:blue;
-  border-radius: 6px;
+  font-size: var(--font-size-base);
+  border: 1px solid var(--secondary);
+  background-color: var(--bg-light);
+  color: var(--text-blue);
+  border-radius: var(--border-radius);
 }
 
-.progress-wrapper {
-  margin-top: 10px;
-  text-align: center;
-  font-weight: bold;
-  color: #333;
-}
-
-.email-message-textarea {
+/* ----------------------------- Chart Layout ----------------------------- */
+.chart-scroll-wrapper {
   width: 100%;
-  padding: 10px;
-  font-size: 1rem;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  background-color: aliceblue;
-  color:black;
-  resize: vertical;
-  margin-top: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
-.word-count {
-  font-size: 0.85rem;
-  color: #666;
-  text-align: right;
-  margin-top: 4px;
+.chart-inner {
+  min-width: 300px;
+  width: 100%;
+  height: 350px;
+  position: relative;
 }
 
-/* Mobile (≤ 600px) */
+/* ----------------------------- Responsive ----------------------------- */
 @media (max-width: 600px) {
   .selector-row {
     flex-direction: column;
@@ -437,7 +199,8 @@ h2 {
   }
 
   .email-input,
-  .email-message-textarea {
+  .email-message-textarea,
+  .email-mode-dropdown {
     width: 100%;
   }
 
@@ -445,86 +208,19 @@ h2 {
     flex-direction: column;
     gap: 0.8rem;
   }
-
-  .email-send-button {
-    font-size: 0.95rem;
-    padding: 10px;
-  }
-
-  .selector-group select {
-    width: 100%;
-  }
-
-  .email-mode-dropdown {
-    width: 100%;
-  }
 }
 
-/* Tablet (≤ 900px) */
 @media (max-width: 900px) {
   .selector-row {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .email-section-container {
-    padding: 1.2rem;
-    margin: 1rem;
-  }
-
   .email-input-group {
     flex-direction: column;
-  }
-
-  .email-send-button {
-    font-size: 1rem;
-    padding: 10px;
   }
 
   .email-message-textarea {
     font-size: 0.95rem;
   }
-
-  .selector-group select {
-    width: 100%;
-  }
-}
-
-.email-section-container {
-  position: relative; /* 👈 Add this */
-  max-width: 700px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  transition: opacity 0.5s ease-in-out;
-}
-
-
-
-.email-close-button {
-  position: absolute;
-  top: 10px;
-  right: 16px;
-  background: transparent;
-  border: none;
-  font-size: 24px;
-  font-weight: bold;
-  color: #555;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  z-index: 10;
-}
-
-.email-close-button:hover {
-  color: #e74c3c;
-}
-
-.modal-backdrop {
-  z-index: 1040 !important;
-}
-.modal {
-  z-index: 1050 !important;
 }
