@@ -21,6 +21,7 @@ export default function App() {
 
   const [emailStatus, setEmailStatus] = useState('');
   const [emailMode, setEmailMode] = useState('to');
+  const [message, setMessage] = useState('');
   const [ascii, setAscii] = useState(true);
   const [table, setTable] = useState(false);
   const [images, setImages] = useState(true);
@@ -33,7 +34,7 @@ export default function App() {
   const [summaryStatus, setSummaryStatus] = useState('');
   const [analysisType, setAnalysisType] = useState('crash'); // or 'anr'
 
-
+const defaultEmailMessage = `Hello sir,\nI am writing to submit the analysis of the provided CSV file. I have reviewed the data and compiled insights which I believe will be useful for your evaluation. PFA.\n Best Regards,\n<strong>Jio Team </strong>`
 
   // email send function
   const handleEmailSend = async () => {
@@ -53,6 +54,12 @@ export default function App() {
     alert('Please enter a valid email address.');
     return;
   }
+  const trimmedMessage = message.trim();
+  if (trimmedMessage.length > 300) {
+    alert('Custom message exceeds 300-character limit');
+    return;
+  }
+
 
   // Prepare email data
   setEmailStatus('Sending...');
@@ -61,6 +68,7 @@ export default function App() {
       to,
       cc,
       bcc,
+      message: trimmedMessage || defaultEmailMessage,
       ascii,
       table,
       images,
@@ -78,6 +86,8 @@ export default function App() {
     setEmailStatus(err.response?.data?.error || 'Failed to send email');
   }
 };
+
+
 
 const handleSubmit = async e => {
   e.preventDefault();
@@ -223,6 +233,7 @@ return (
   </div>
 
   <div className="email-input-group">
+    
     <input
       type="email"
       className="email-input"
@@ -248,6 +259,19 @@ return (
         onChange={e => setBcc(e.target.value)}
       />
     )}
+    <label htmlFor="emailMessage"></label>
+  <textarea
+    id="emailMessage"
+    className="email-message-textarea"
+    rows={4}
+    placeholder={defaultEmailMessage}
+    value={message}
+    onChange={(e) => setMessage(e.target.value)
+    }
+  />
+  <div className="word-count">
+  {message.length} / 300 Char
+</div>
   </div>
 
   <button

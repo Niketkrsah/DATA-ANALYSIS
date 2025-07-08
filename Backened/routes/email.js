@@ -20,8 +20,28 @@ router.post('/send', async (req, res) => {
     images = false,
     ppt = false,
     analysisType,
-    filename
+    filename,
+    message = ''
   } = req.body;
+
+//for text 
+  const sanitizeMessage = (msg) => {
+  if (!msg || typeof msg !== 'string') {
+    throw new Error('Custom message must be a valid string');
+  }
+
+  if (msg.length > 300) {
+    throw new Error('Custom message exceeds 300-character limit');
+  }
+  return msg;
+};
+
+let customMessage;
+try {
+  customMessage = sanitizeMessage(message).replace(/\n/g, '<br>');
+} catch (err) {
+  return res.status(400).json({ error: err.message });
+}
 
   const toList = parseEmails(to);
   const ccList = parseEmails(cc);
@@ -46,6 +66,9 @@ router.post('/send', async (req, res) => {
       //useBase64: false
 
     }));
+
+    html = `<div style="margin-bottom: 1em;">${customMessage}</div>` + html;
+
   } catch (err) {
     console.error('Failed to build email body:', err);
     return res.status(500).json({ error: 'Failed to build email content' });
@@ -71,7 +94,7 @@ router.post('/send', async (req, res) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    res.json({ message: 'Email sent successfully!' });
+    res.status(200).json({ message: 'Email sent successfully!' });
   } catch (err) {
     console.error('Email error:', err);
     res.status(500).json({ error: 'Failed to send email' });
