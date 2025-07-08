@@ -174,7 +174,7 @@ export default function ChartCard({ title, data, type = 'bar' }) {
         )}
         <div className="chart-scroll-wrapper">
   <div className="chart-inner">
-    <ChartComponent data={chartData} options={options} title={title} height={250}/>
+    <ChartComponent data={chartData} options={options} title={title} />
     
   </div>
 </div>

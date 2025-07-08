@@ -3,15 +3,30 @@ const path = require('path');
 
 // ASCII Bar Chart
 function generateAsciiBarChart(data, title) {
-  const maxLabelLength = Math.max(...Object.keys(data).map(k => k.length));
+  const wrapLimit = 70;
+  const maxLabelLength = Math.max(
+    ...Object.keys(data).map(k => (k.replace(/\n/g, ' ').length > wrapLimit ? wrapLimit : k.replace(/\n/g, ' ').length))
+  );
   const maxValue = Math.max(...Object.values(data));
   const scale = maxValue > 50 ? 50 / maxValue : 1;
 
   let chart = `\n<b>${title}</b>\n<pre style="font-family: monospace;">`;
-  for (const [label, value] of Object.entries(data)) {
-    const bar = '█'.repeat(Math.round(value * scale));
-    chart += `${label.padEnd(maxLabelLength)} | ${bar} (${value})\n`;
+
+  for (const [rawLabel, value] of Object.entries(data)) {
+    const label = rawLabel.replace(/\n/g, ' ');
+    const bar = '■'.repeat(Math.round(value * scale));
+    const lines = [];
+
+    for (let i = 0; i < label.length; i += wrapLimit) {
+      lines.push(label.slice(i, i + wrapLimit));
+    }
+
+    chart += `${lines[0].padEnd(maxLabelLength)} | ${bar} (${value})\n`;
+    for (let i = 1; i < lines.length; i++) {
+      chart += `${lines[i].padEnd(maxLabelLength)} |\n`;
+    }
   }
+
   chart += '</pre>';
   return chart;
 }

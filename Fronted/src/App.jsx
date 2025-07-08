@@ -310,7 +310,7 @@ return (
     <Row> 
       {Object.entries(summary).map(([title, data], idx) => (
         // console.log(`Rendering chart for: ${title}`, data),
-        <Col key={idx} xs={5} md={6}>
+        <Col key={idx} xs={12} md={6}>
           <ChartCard title={title} data={data} type="bar" size="large" />
         </Col>
       ))}
