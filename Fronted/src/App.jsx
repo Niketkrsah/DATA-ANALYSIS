@@ -5,6 +5,7 @@ import './App.css';
 import { Container, Row, Col } from 'react-bootstrap';
 import ChartCard from './components/ChartCard';
 import 'bootstrap/dist/css/bootstrap.min.css'; 
+import { Modal, Button } from 'react-bootstrap';
 
 
 export default function App() {
@@ -18,11 +19,16 @@ export default function App() {
 
   const [uploadProgress, setUploadProgress] = useState(0);
   const [analysisProgress, setAnalysisProgress] = useState(0);
-
+  const [sessionId, setSessionId] = useState('');
   const [emailStatus, setEmailStatus] = useState('');
+const [sendingEmail, setSendingEmail] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+const openEmailModal = () => setShowEmailModal(true);
+const closeEmailModal = () => setShowEmailModal(false);
+
   const [emailMode, setEmailMode] = useState('to');
   const [message, setMessage] = useState('');
-  const [ascii, setAscii] = useState(true);
+  const [ascii, setAscii] = useState(false);
   const [table, setTable] = useState(false);
   const [images, setImages] = useState(true);
   const [ppt, setPpt] = useState(false);
@@ -32,9 +38,14 @@ export default function App() {
   const [filename, setFilename] = useState('');
 
   const [summaryStatus, setSummaryStatus] = useState('');
-  const [analysisType, setAnalysisType] = useState('crash'); // or 'anr'
+  const [analysisType, setAnalysisType] = useState('crash'); 
 
 const defaultEmailMessage = `Hello sir,\nI am writing to submit the analysis of the provided CSV file. I have reviewed the data and compiled insights which I believe will be useful for your evaluation. PFA.\n Best Regards,\n<strong>Jio Team </strong>`
+
+
+
+
+
 
   // email send function
   const handleEmailSend = async () => {
@@ -63,6 +74,7 @@ const defaultEmailMessage = `Hello sir,\nI am writing to submit the analysis of 
 
   // Prepare email data
   setEmailStatus('Sending...');
+  setSendingEmail(true);
   try {
     const res = await axios.post('/email/send', {
       to,
@@ -74,7 +86,8 @@ const defaultEmailMessage = `Hello sir,\nI am writing to submit the analysis of 
       images,
       ppt,
       analysisType,
-      filename
+      filename,
+      sessionId
     });
      if (res.status === 200) {
       setEmailStatus(res.data.message || 'Email sent!');
@@ -84,8 +97,14 @@ const defaultEmailMessage = `Hello sir,\nI am writing to submit the analysis of 
   } catch (err) {
     console.error('Email send error:', err);
     setEmailStatus(err.response?.data?.error || 'Failed to send email');
+  } finally {
+    setSendingEmail(false); // ✅ re-enable the button
   }
 };
+
+
+
+
 
 
 
@@ -124,13 +143,31 @@ const handleSubmit = async e => {
 
     clearInterval(interval);
 
-    if (res.status !== 200 || !res.data.pptxUrl) {
-      throw new Error('Invalid response from analysis');
-    }
-    // setAnalysisProgress(100);
+    if (res.status !== 200 || !res.data.pptxUrl || !res.data.sessionId) {
+  throw new Error('Invalid response from analysis');
+}
+
     setPptUrl(res.data.pptxUrl);
+    setFilename(file.name); // Save original filename
+    setSessionId(res.data.sessionId);
     setSummaryStatus('✅ Analysis complete. Click below to view graphs.');
     setEmailStatus('');
+
+// ✅ Immediately fetch and show summary
+      try {
+  const res2 = await axios.get(`/download/${res.data.sessionId}/${analysisType}_summary.json`);
+  const data = res2.data;
+  if (data && data.status === 'success' && typeof data.summary === 'object') {
+    setSummary(data.summary);
+    setShowCharts(true);
+  } else {
+    throw new Error('Invalid summary format');
+  }
+      } catch (err) {
+  console.error('Failed to load summary:', err);
+  alert('❌ Could not load summary data.');
+      }
+    
   } catch (err) {
     clearInterval(interval);
     console.error('Analysis error:', err);
@@ -140,10 +177,16 @@ const handleSubmit = async e => {
   }
 };
 
+
+
+
+
+
+
 //show chart
 const handleShowCharts = async () => {
   try {
-    const res = await axios.get(`/output/${analysisType}_summary.json`);
+    const res = await axios.get(`/download/${sessionId}/${analysisType}_summary.json`);
     // console.log('📦 Summary response:', res.data);
 
     // Accept any non-null object
@@ -158,6 +201,14 @@ const handleShowCharts = async () => {
     alert('❌ Could not load summary data.');
   }
 };
+
+
+
+
+
+
+
+
 
 return (
   <div className="container-fluid">
@@ -200,99 +251,111 @@ return (
 )}
 
 
-    <form onSubmit={handleSubmit}>
+<form onSubmit={handleSubmit}>
         <input type="file" accept=".csv" onChange={e => setFile(e.target.files[0])} />
       <button type="submit" className="submit-button" disabled={loading ||!file}>
         {loading ? 'Analyzing…' : 'Start Analysis'}
       </button>
     </form>
 
-  {summaryStatus && (
+{summaryStatus && (
       <p className="text-success text-center mt-3">{summaryStatus}</p>
     )}
 
-   
-<div className="email-section-container">
-  <h3 className="email-heading">📧 Send Report via Email</h3>
-
-  <div className="email-checkbox-group">
-    <label><input type="checkbox" checked={ascii} onChange={() => setAscii(!ascii)} /> ASCII Graphs</label>
-    <label><input type="checkbox" checked={table} onChange={() => setTable(!table)} /> Summary Tables</label>
-    <label><input type="checkbox" checked={images} onChange={() => setImages(!images)} /> Graph Images</label>
-    <label><input type="checkbox" checked={ppt} onChange={() => setPpt(!ppt)} /> PowerPoint Presentation</label>
+{pptUrl && (
+  <div className="text-center mt-4">
+    <button className="btn btn-success" onClick={openEmailModal}>
+      📩 Send Report
+    </button>
   </div>
+)}
 
-  {/* Selector for email mode */}
-  <div className="email-mode-selector">
-    <label>Select Email Mode: </label>
-    <select value={emailMode} onChange={e => setEmailMode(e.target.value)} className="email-mode-dropdown">
-      <option value="to">To Only</option>
-      <option value="to-cc">To + CC</option>
-      <option value="to-cc-bcc">To + CC + BCC</option>
-    </select>
-  </div>
+<Modal show={showEmailModal} onHide={closeEmailModal} size="lg" centered>
+  <Modal.Header closeButton>
+    <Modal.Title>📧 Send Report via Email</Modal.Title>
+  </Modal.Header>
+  <Modal.Body>
+    <div className="email-checkbox-group">
+      <label><input type="checkbox" checked={ascii} onChange={() => setAscii(!ascii)} /> ASCII Graphs</label>
+      <label><input type="checkbox" checked={table} onChange={() => setTable(!table)} /> Summary Tables</label>
+      <label><input type="checkbox" checked={images} onChange={() => setImages(!images)} /> Graph Images</label>
+      <label><input type="checkbox" checked={ppt} onChange={() => setPpt(!ppt)} /> PowerPoint Presentation</label>
+    </div>
 
-  <div className="email-input-group">
-    
-    <input
-      type="email"
-      className="email-input"
-      placeholder="To: user1@example.com, user2@example.com"
-      value={to}
-      onChange={e => setTo(e.target.value)}
-    />
-    {(emailMode === 'to-cc' || emailMode === 'to-cc-bcc') && (
+    <div className="email-mode-selector mt-3">
+      <label>Select Email Mode: </label>
+      <select value={emailMode} onChange={e => setEmailMode(e.target.value)} className="email-mode-dropdown">
+        <option value="to">To Only</option>
+        <option value="to-cc">To + CC</option>
+        <option value="to-cc-bcc">To + CC + BCC</option>
+      </select>
+    </div>
+
+    <div className="email-input-group mt-3">
       <input
         type="email"
         className="email-input"
-        placeholder="CC: optional1@example.com, optional2@example.com"
-        value={cc}
-        onChange={e => setCc(e.target.value)}
+        placeholder="To: user1@example.com, user2@example.com"
+        value={to}
+        onChange={e => setTo(e.target.value)}
       />
-    )}
-    {emailMode === 'to-cc-bcc' && (
-      <input
-        type="email"
-        className="email-input"
-        placeholder="BCC: hidden1@example.com, hidden2@example.com"
-        value={bcc}
-        onChange={e => setBcc(e.target.value)}
+      {(emailMode === 'to-cc' || emailMode === 'to-cc-bcc') && (
+        <input
+          type="email"
+          className="email-input mt-2"
+          placeholder="CC: optional1@example.com"
+          value={cc}
+          onChange={e => setCc(e.target.value)}
+        />
+      )}
+      {emailMode === 'to-cc-bcc' && (
+        <input
+          type="email"
+          className="email-input mt-2"
+          placeholder="BCC: hidden1@example.com"
+          value={bcc}
+          onChange={e => setBcc(e.target.value)}
+        />
+      )}
+      <textarea
+        className="email-message-textarea mt-3"
+        rows={4}
+        placeholder={defaultEmailMessage}
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
       />
-    )}
-    <label htmlFor="emailMessage"></label>
-  <textarea
-    id="emailMessage"
-    className="email-message-textarea"
-    rows={4}
-    placeholder={defaultEmailMessage}
-    value={message}
-    onChange={(e) => setMessage(e.target.value)
-    }
-  />
-  <div className="word-count">
-  {message.length} / 300 Char
-</div>
+      <div className="word-count">{message.length} / 300 Char</div>
+    </div>
+  </Modal.Body>
+  <Modal.Footer>
+    <Button variant="secondary" onClick={closeEmailModal}>Cancel</Button>
+    <Button
+      variant="primary"
+      onClick={handleEmailSend}
+      disabled={sendingEmail ||!to.trim() || !to.includes('@') || !pptUrl}
+    >
+      ✉️ Send Email
+    </Button>
+    {emailStatus && (
+  <div className="text-center mt-3">
+    <p className={`email-status ${emailStatus.includes('Failed') ? 'text-danger' : 'text-success'}`}>
+      {emailStatus}
+    </p>
   </div>
+)}
+  </Modal.Footer>
+</Modal>
 
-  <button
-    className="email-send-button"
-    disabled={!to.trim() || !to.includes('@') || !pptUrl}
-    onClick={handleEmailSend}
-  >
-    ✉️ Send Email
-  </button>
 
-  {emailStatus && <p className="email-status">{emailStatus}</p>}
-</div>
 
- {pptUrl && (
+{pptUrl && (
       <div className="download-link">
         <a href={pptUrl} target="_blank" rel="noopener noreferrer">📥 Download Presentation</a>
       </div>
     )}
 
 
-  {pptUrl && summaryStatus && (
+  {pptUrl && summaryStatus && !showCharts && (
       <div className="text-center mt-3">
         <button
           className="btn btn-primary"
@@ -304,7 +367,7 @@ return (
       </div>
     )}
 
-  {showCharts && Object.keys(summary).length > 0 && (
+  {showCharts && !showEmailModal && Object.keys(summary).length > 0 && (
   <Container fluid className="mt-4">
     <h4 className="mb-4">📊 Visual Graph</h4>
     <Row> 

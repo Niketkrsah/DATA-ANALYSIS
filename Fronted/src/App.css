@@ -203,26 +203,6 @@
   gap: 5px;
 }
 
-/* .chart-scroll-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-.chart-inner {
-  min-width: 320px;      
-  height: 350px;         
-  position: relative;
-}
-
-@media (max-width: 768px) {
-  .chart-inner {
-    height: 280px;
-  }
-}
-.card {
-  max-width: 100%;
-} */
 
 
 .chart-scroll-wrapper {
@@ -262,7 +242,7 @@
 }
 
 
-.email-section-container {
+/* .email-section-container {
   max-width: 700px;
   margin: 2rem auto;
   padding: 2rem;
@@ -270,7 +250,7 @@
   border: 1px solid #e0e0e0;
   border-radius: 12px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-}
+} */
 
 .email-heading {
   text-align: center;
@@ -508,4 +488,43 @@ h2 {
   .selector-group select {
     width: 100%;
   }
+}
+
+.email-section-container {
+  position: relative; /* 👈 Add this */
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transition: opacity 0.5s ease-in-out;
+}
+
+
+
+.email-close-button {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  color: #555;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  z-index: 10;
+}
+
+.email-close-button:hover {
+  color: #e74c3c;
+}
+
+.modal-backdrop {
+  z-index: 1040 !important;
+}
+.modal {
+  z-index: 1050 !important;
 }

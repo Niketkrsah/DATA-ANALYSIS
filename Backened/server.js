@@ -2,8 +2,11 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const cron = require('node-cron');
+
 
 const analyzeRouter = require('./routes/analyze');
+
 const emailRoutes = require('./routes/email');
 
 const app = express();
@@ -15,23 +18,22 @@ app.use('/download', express.static(path.join(__dirname, 'output')));
 app.use('/output', express.static(path.join(__dirname, 'output')));
 
 //cleanup
-const { deleteOldPPTXFiles,cleanupOldPPTX, cleanupOldFiles} = require('./utils/cleanup');
+const { cleanupOldSessions } = require('./utils/cleanupOldSessions');
+
 
 // Mount routes
 app.use('/analyze', analyzeRouter);
 app.use('/email', emailRoutes);
 
-const cron = require('node-cron');
 
 
-// Run cleanup every hour
-cron.schedule('0 * * * *', () => {
-  console.log('⏰ Running hourly cleanup...');
-  const uploadsDir = path.join(__dirname, 'uploads');
+cron.schedule('*/30 * * * *', () => {
   const outputDir = path.join(__dirname, 'output');
+  const maxAgeMs = 2 * 60 * 60 * 1000; // 2 hours
+  const activeSessionId = global.activeSessionId || null; // Replace with real session tracking
 
-  cleanupOldFiles(uploadsDir);       // Clean old uploads
-  cleanupOldPPTX(outputDir);         // Clean old PPTX files
+  console.log('⏰ Running 2-hour session cleanup...');
+  cleanupOldSessions(outputDir, maxAgeMs, activeSessionId ? [activeSessionId] : []);
 });
 
 

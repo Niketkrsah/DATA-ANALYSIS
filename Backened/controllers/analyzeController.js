@@ -1,20 +1,16 @@
-const { deleteOldPPTXFiles, cleanupOldFiles, cleanupOldPPTX } = require('../utils/cleanup');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-
+const { cleanupOldSessions } = require('../utils/cleanupOldSessions');
 const PY_CMD = process.platform === 'win32' ? 'py' : 'python3';
 
 function sanitizeFilename(filename) {
   return filename.replace(/[^a-zA-Z0-9_\-\.]/g, '_');
 }
 
-function runPython(inputCsv, outputName, type, res) {
+function runPython(inputCsv, outputName, type, sessionPath, res) {
   const script = path.join(__dirname, `../python/${type}_analysis.py`);
-  const outdir = path.join(__dirname, '../output/');
-  const args = ['--input', inputCsv, '--outdir', outdir];
-  deleteOldPPTXFiles(outdir);
-
+  const args = ['--input', inputCsv, '--outdir', sessionPath];
 
   console.log(`🔧 Spawning: ${PY_CMD} ${script} ${args.join(' ')}`);
   let stderr = '';
@@ -28,55 +24,41 @@ function runPython(inputCsv, outputName, type, res) {
   });
 
   proc.on('close', code => {
-    fs.unlink(inputCsv, err => {
-      if (err) console.error(`❌ Failed to delete uploaded file: ${inputCsv}`, err);
-      else console.log(`🗑️ Deleted uploaded file: ${inputCsv}`);
-    });
+    fs.unlink(inputCsv, () => {}); // Delete uploaded CSV
 
-    if (code !== 0) {
+    const pptxPath = path.join(sessionPath, `${type}_report.pptx`);
+    const finalName = outputName.replace(/\.csv$/i, '.pptx');
+    const finalPath = path.join(sessionPath, finalName);
+    
+
+    if (code !== 0 || !fs.existsSync(pptxPath)) {
       return res.status(500).json({ error: 'Analysis failed', details: stderr });
     }
 
-    const pptxPath = path.join(outdir, `${type}_report.pptx`);
-    const renamed = path.join(outdir, `${outputName}.pptx`);
+    fs.renameSync(pptxPath, finalPath);
 
-    try {
-      if (!fs.existsSync(pptxPath)) {
-        return res.status(500).json({ error: 'PPTX not generated' });
-      }
-      fs.renameSync(pptxPath, renamed);
-    } catch (err) {
-      console.error('Rename failed:', err);
-      return res.status(500).json({ error: 'Failed to rename PPTX file' });
-    }
-
-    res.json({ pptxUrl: `/download/${outputName}.pptx` });
-    filename = outputName; // Store for email
-    // console.log(`✅ Analysis complete. PPTX available at: ${renamed}`);
+    res.json({
+      pptxUrl: `/download/${path.basename(sessionPath)}/${finalName}`,
+      sessionId: path.basename(sessionPath)
+    });
   });
 }
 
-
-
-// For uploaded CSV files
 exports.analyzeByUpload = async (req, res) => {
-  await cleanupOldFiles(); 
-  await cleanupOldPPTX();
   const type = req.body.type || 'crash';
 
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
   const uploadedPath = req.file.path;
-  const originalName = req.file.originalname;
+  const originalName = req.originalFilename;
+  const sessionPath = req.sessionPath;
 
   if (!originalName.toLowerCase().endsWith('.csv')) {
     return res.status(400).json({ error: 'Only .csv files are allowed' });
   }
 
-  const baseName = sanitizeFilename(path.basename(originalName, '.csv'));
+  const outputRoot = path.join(__dirname, '../output');
+  await cleanupOldSessions(outputRoot,  60 * 1000,[req.sessionId]);
 
-  // ✅ Corrected parameter order
-  runPython(uploadedPath, baseName, type, res);
+  runPython(uploadedPath, originalName, type, sessionPath, res);
 };
-
-exports.cleanupOldFiles = cleanupOldFiles;

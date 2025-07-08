@@ -90,16 +90,15 @@ function generateImageEmbeds(imageDir) {
 
 
 // Main builder
-function buildEmailBody({ jsonPath, includeAscii, includeTable, includePpt, includeImages, analysisType }) {
-  const jsonData = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+function buildEmailBody({ jsonPath, includeAscii, includeTable, includePpt, includeImages, analysisType, sessionDir, filename }) {
+  const rawData = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+  const summaryData = rawData.summary || rawData; // ✅ Support both formats
+
   const imageDir = path.join(path.dirname(jsonPath), `${analysisType}_images`);
-
-
-
   let html = '<h2>📊 Crash Report Summary</h2>';
   let attachments = [];
 
-  for (const [section, data] of Object.entries(jsonData)) {
+  for (const [section, data] of Object.entries(summaryData)) {
     const isNumeric = typeof data === 'object' && !Array.isArray(data) && Object.values(data).every(v => typeof v === 'number');
 
     if (includeAscii && isNumeric) {
@@ -111,37 +110,29 @@ function buildEmailBody({ jsonPath, includeAscii, includeTable, includePpt, incl
     }
   }
 
-// Images
   if (includeImages) {
     const imageBlock = generateImageEmbeds(imageDir);
     html += imageBlock.html;
     attachments = imageBlock.attachments;
   }
 
-
+  //
   // else {
   //     const imageBlock = generateBase64ImageEmbeds(imageDir);
   //     html += imageBlock.html;
   //   }
 
-
-  
-  // ppt
- if (includePpt) {
-  const pptxPath = path.join(path.dirname(jsonPath), `${filename}.pptx`);
-  console.log('📁 Checking for PPTX file at:', pptxPath);
-
-  if (fs.existsSync(pptxPath)) {
-    console.log('📎 PPTX file found, adding to attachments');
-    attachments.push({
-      filename: `${filename}.pptx`,
-      path: pptxPath
-    });
-  } else {
-    console.warn('⚠️ PPTX file not found at:', pptxPath);
+  if (includePpt) {
+    const pptxPath = path.join(sessionDir, filename.replace(/\.csv$/i, '.pptx'));
+    if (fs.existsSync(pptxPath)) {
+      attachments.push({
+        filename: filename.replace(/\.csv$/i, '.pptx'),
+        path: pptxPath
+      });
+    } else {
+      console.warn('⚠️ PPTX file not found at:', pptxPath);
+    }
   }
-}
-
 
   return { html, attachments };
 }

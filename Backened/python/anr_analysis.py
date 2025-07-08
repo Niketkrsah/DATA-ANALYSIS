@@ -167,7 +167,9 @@ def run_anr_analysis(input_csv, output_dir):
     save_chart(fig, "focused_window_anrs", img_dir)
 
     with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(summary, f, indent=2, ensure_ascii=False)
+        json.dump({
+            "status": "success",
+            "summary": summary}, f, indent=2, ensure_ascii=False)
 
     build_ppt(img_dir, ppt_path)
 

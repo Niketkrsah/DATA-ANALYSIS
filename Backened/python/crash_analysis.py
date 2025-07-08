@@ -174,7 +174,9 @@ def run_crash_analysis(input_csv, output_dir):
 
     # === Save JSON + PPT ===
     with open(summary_path, "w", encoding="utf-8") as f:
-        json.dump(summary, f, indent=2, ensure_ascii=False)
+        json.dump({
+            "status": "success",
+        "summary": summary },f, indent=2, ensure_ascii=False)
 
     build_ppt(img_dir, output_dir)
 

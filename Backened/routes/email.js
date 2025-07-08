@@ -8,8 +8,7 @@ const router = express.Router();
 
 // comma separated email lists
 const parseEmails = str =>
-  str?.split(',').map(e => e.trim()).filter(Boolean) || [];
-
+str?.split(',').map(e => e.trim()).filter(Boolean) || [];
 router.post('/send', async (req, res) => {
   const {
     to,
@@ -21,27 +20,31 @@ router.post('/send', async (req, res) => {
     ppt = false,
     analysisType,
     filename,
+    sessionId, // ✅ Extract sessionId from request
     message = ''
   } = req.body;
 
-//for text 
+  if (!sessionId || !analysisType || !filename) {
+    return res.status(400).json({ error: 'Missing sessionId, analysisType, or filename' });
+  }
+
+  // Validate and sanitize message
   const sanitizeMessage = (msg) => {
-  if (!msg || typeof msg !== 'string') {
-    throw new Error('Custom message must be a valid string');
-  }
+    if (!msg || typeof msg !== 'string') {
+      throw new Error('Custom message must be a valid string');
+    }
+    if (msg.length > 300) {
+      throw new Error('Custom message exceeds 300-character limit');
+    }
+    return msg;
+  };
 
-  if (msg.length > 300) {
-    throw new Error('Custom message exceeds 300-character limit');
+  let customMessage;
+  try {
+    customMessage = sanitizeMessage(message).replace(/\n/g, '<br>');
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
   }
-  return msg;
-};
-
-let customMessage;
-try {
-  customMessage = sanitizeMessage(message).replace(/\n/g, '<br>');
-} catch (err) {
-  return res.status(400).json({ error: err.message });
-}
 
   const toList = parseEmails(to);
   const ccList = parseEmails(cc);
@@ -51,7 +54,9 @@ try {
     return res.status(400).json({ error: 'At least one recipient is required in the "to" field' });
   }
 
-  const jsonPath = path.join(__dirname, `../output/${analysisType}_summary.json`);
+  const sessionDir = path.join(__dirname, `../output/${sessionId}`);
+  const jsonPath = path.join(sessionDir, `${analysisType}_summary.json`);
+  const pptxPath = path.join(sessionDir, filename.replace(/\.csv$/i, '.pptx'));
 
   let html, attachments;
   try {
@@ -62,13 +67,11 @@ try {
       includeImages: images,
       includePpt: ppt,
       analysisType,
-
-      //useBase64: false
-
+      sessionDir,
+      filename // ✅ Pass filename for PPTX attachment
     }));
 
     html = `<div style="margin-bottom: 1em;">${customMessage}</div>` + html;
-
   } catch (err) {
     console.error('Failed to build email body:', err);
     return res.status(500).json({ error: 'Failed to build email content' });
