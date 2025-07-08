@@ -322,7 +322,7 @@ return (
     </div>
   </Modal.Body>
   <Modal.Footer>
-    <Button variant="secondary" onClick={closeEmailModal}>Cancel</Button>
+    <Button variant="secondary" onClick={closeEmailModal}>Close</Button>
     <Button
       variant="primary"
       onClick={handleEmailSend}
