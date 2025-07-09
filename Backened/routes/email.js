@@ -19,6 +19,7 @@ router.post('/send', async (req, res) => {
     images = false,
     ppt = false,
     analysisType,
+    selectedCharts = [],
     filename,
     sessionId, // ✅ Extract sessionId from request
     message = ''
@@ -68,6 +69,7 @@ router.post('/send', async (req, res) => {
       includePpt: ppt,
       analysisType,
       sessionDir,
+      selectedCharts,
       filename // ✅ Pass filename for PPTX attachment
     }));
 

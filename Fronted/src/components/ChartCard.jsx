@@ -30,7 +30,7 @@ ChartJS.register(
   Legend
 );
 
-export default function ChartCard({ title, data, type = 'bar' }) {
+export default function ChartCard({ title, data, type = 'bar' , darkMode = false}) {
   // console.log(`Rendering chart for: ${title}`, data);
   const [chartType, setChartType] = useState(type);
 
@@ -117,16 +117,28 @@ export default function ChartCard({ title, data, type = 'bar' }) {
   };
 
   const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      mode: 'index',
-      intersect: false
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: {
+    mode: 'index',
+    intersect: false
+  },
+  plugins: {
+    legend: {
+      display: isPieChart,
+      labels: {
+        color: darkMode ? '#fff' : '#000'
+      }
     },
-    plugins: {
-      legend: { display: isPieChart},
-      title: { display: true, text: title },
-      tooltip: {
+    title: {
+      display: true,
+      text: title,
+      color: darkMode ? '#fff' : '#000'
+    },
+    tooltip: {
+      backgroundColor: darkMode ? '#333' : '#fff',
+      titleColor: darkMode ? '#fff' : '#000',
+      bodyColor: darkMode ? '#fff' : '#000',
       callbacks: {
         title: (tooltipItems) => {
           const index = tooltipItems[0].dataIndex;
@@ -140,13 +152,32 @@ export default function ChartCard({ title, data, type = 'bar' }) {
       }
     }
   },
- ...(isPieChart ? {} : {
+  ...(isPieChart ? {} : {
     scales: {
-      y: { beginAtZero: true }}
+      x: {
+        ticks: {
+          color: darkMode ? '#fff' : '#000'
+        },
+        grid: {
+          color: darkMode ? '#444' : '#ccc'
+        }
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: darkMode ? '#fff' : '#000'
+        },
+        grid: {
+          color: darkMode ? '#444' : '#ccc'
+        }
+      }
+    }
   })
 };
 
-  const ChartComponent = isPieChart ? Pie : (chartType === 'line' ? Line : Bar);
+
+
+const ChartComponent = isPieChart ? Pie : (chartType === 'line' ? Line : Bar);
 
 
   return (
@@ -161,7 +192,8 @@ export default function ChartCard({ title, data, type = 'bar' }) {
               id={`chart-${val}-${title}`}
               type="radio"
               variant="outline-primary"
-              name="chartType"
+              name={`chartType-${title}`}
+              // name="chartType"
               value={val}
               checked={chartType === val}
               onChange={(e) => setChartType(e.currentTarget.value)}

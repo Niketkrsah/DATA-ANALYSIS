@@ -17,6 +17,10 @@ export default function App() {
   const [pptUrl,     setPptUrl]    = useState('');
   const [summary, setSummary] = useState({});
   const [showCharts, setShowCharts] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [isThemeLoaded, setIsThemeLoaded] = useState(false);
+
+
 
   const [uploadProgress, setUploadProgress] = useState(0);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -41,6 +45,50 @@ export default function App() {
 
   const [summaryStatus, setSummaryStatus] = useState('');
   const [analysisType, setAnalysisType] = useState('crash'); 
+  const [selectedCharts, setSelectedCharts] = useState([]);
+  const [selectorEnabled, setSelectorEnabled] = useState(false);
+
+
+
+  //Chart selector
+const toggleChartSelection = (chart) => {
+  setSelectedCharts(prev => {
+    if (prev.includes(chart)) {
+      return prev.filter(item => item !== chart); // remove
+    } else {
+      return [...prev, chart]; // add to end
+    }
+  });
+};
+
+useEffect(() => {
+  if (selectorEnabled) {
+    setSelectedCharts([]);  //  clear selections on enable
+  } else {
+    setSelectedCharts(Object.keys(summary));  // show all charts when selector disabled
+  }
+}, [selectorEnabled, summary]);
+
+
+//theme
+useEffect(() => {
+  if (isThemeLoaded) {
+    document.body.classList.toggle('dark-theme', darkMode);
+    document.body.classList.toggle('light-theme', !darkMode);
+  }
+}, [darkMode, isThemeLoaded]);
+
+
+useEffect(() => {
+  const savedMode = localStorage.getItem('darkMode');
+  if (savedMode !== null) {
+    setDarkMode(savedMode === 'true');
+  }
+  setIsThemeLoaded(true); // ✅ Mark as ready
+}, []);
+
+if (!isThemeLoaded) return <div className="loading-screen">Loading...</div>;
+
 
 
 // Default message body for the email
@@ -89,7 +137,8 @@ const defaultEmailMessage = `Hello sir,\nI am writing to submit the analysis of 
       ppt,
       analysisType,
       filename,
-      sessionId
+      sessionId,
+      selectedCharts,
     });
      if (res.status === 200) {
       setEmailStatus(res.data.message || 'Email sent!');
@@ -190,6 +239,8 @@ const handleShowCharts = async () => {
     if (res.status === 200 && res.data && typeof res.data === 'object' && !Array.isArray(res.data)) {
       setSummary(res.data);
       setShowCharts(true);
+      setSelectedCharts(Object.keys(res.data.summary)); 
+
     } else {
       alert('⚠️ Unexpected summary format.');
     }
@@ -205,8 +256,24 @@ const handleShowCharts = async () => {
 
  // ----------------- JSX RENDER -----------------
 return (
-  <div className="container-fluid">
+ <div className={`container-fluid ${darkMode ? 'dark-theme' : 'light-theme'}`}>
     <h1 className="app-title">📊 CSV Analyzer</h1>
+    <div className="theme-toggle-fixed">
+  <button
+  className={`btn ${darkMode ? 'btn-outline-light' : 'btn-outline-dark'}`}
+  onClick={() => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem('darkMode', newMode);
+  }}
+>
+  {darkMode ? '🌞 Light Mode' : '🌙 Dark Mode'}
+</button>
+
+
+</div>
+
+
 <div className="selector-row">
   <div className="selector-group">
     <label>Select Report Type:</label>
@@ -360,17 +427,49 @@ return (
         </button>
       </div>
     )}
+{showCharts && (
+  <div className="text-center my-3">
+    <button
+  className={`btn ${selectorEnabled ? 'btn-primary' : 'btn-secondary'}`}
+  onClick={() => setSelectorEnabled(!selectorEnabled)}>
+  {selectorEnabled ? 'Disable Selector' : 'Enable Selector'}
+</button>
+
+  </div>
+)}
 
   {showCharts && !showEmailModal && Object.keys(summary).length > 0 && (
   <Container fluid className="mt-4">
     <h4 className="mb-4">📊 Visual Graph</h4>
     <Row> 
-      {Object.entries(summary).map(([title, data], idx) => (
-        // console.log(`Rendering chart for: ${title}`, data),
-        <Col key={idx} xs={12} md={6}>
-          <ChartCard title={title} data={data} type="bar" size="large" />
-        </Col>
-      ))}
+{Object.entries(summary).map(([title, data], idx) => (
+  <Col key={idx} xs={12} md={6} className="mb-4">
+    {selectorEnabled && (
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          type="checkbox"
+          checked={selectedCharts.includes(title)}
+          onChange={() => toggleChartSelection(title)}
+          id={`chart-${idx}`}
+        />
+        <label className="form-check-label" htmlFor={`chart-${idx}`}>
+          <strong>{idx + 1}.</strong> {title}
+        </label>
+        <span className="badge bg-secondary ms-2">
+          {selectedCharts.includes(title) ? selectedCharts.indexOf(title) + 1 : ''}
+        </span>
+      </div>
+    )}
+    {!selectorEnabled && (
+      <h5><strong>{idx + 1}.</strong> {title}</h5>
+    )}
+    <ChartCard title={title} data={data} type="bar" size="large" darkMode={darkMode} />
+  </Col>
+))}
+
+
+       
     </Row>
   </Container>
 )}
