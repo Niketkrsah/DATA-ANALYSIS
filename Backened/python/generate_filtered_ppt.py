@@ -37,7 +37,7 @@ pptx_filename = sys.argv[4]
 image_dir = os.path.join(session_dir, f"{analysis_type}_images")
 pptx_path = os.path.join(session_dir, pptx_filename)
 
-# ✅ Choose correct mapping
+#  Choose correct mapping
 title_to_filename = crash_map if analysis_type == "crash" else anr_map
 
 prs = Presentation()

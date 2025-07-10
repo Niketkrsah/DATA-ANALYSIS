@@ -8,6 +8,7 @@ import matplotlib
 import warnings
 from pptx import Presentation
 from pptx.util import Inches
+import textwrap
 
 # === Configs ===
 matplotlib.rcParams["font.family"] = "Segoe UI Emoji"
@@ -57,8 +58,21 @@ def run_crash_analysis(input_csv, output_dir):
         plt.close(fig)
         return path
 
+    def wrap_labels(series, width=30):
+        return series.rename(lambda label: "\n".join(textwrap.wrap(label, width)))
+
     def bar_chart(series, title, xlabel, name, img_dir, horizontal=False):
-        fig, ax = plt.subplots(figsize=(12, 6))
+        series = wrap_labels(series,width=100)
+
+        num_items = len(series)
+        max_label_len = max([len(str(label)) for label in series.index])
+
+    # Dynamic sizing
+        width = 12 if not horizontal else min(20, 6 + max_label_len * 0.2)
+        height = min(10, 4 + num_items * 0.4)
+
+        fig, ax = plt.subplots(figsize=(width, height))
+
         if horizontal:
             if name == "top_backtrace_chain":
                 series = series[::-1]

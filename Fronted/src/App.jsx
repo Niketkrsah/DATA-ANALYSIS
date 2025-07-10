@@ -92,10 +92,8 @@ if (!isThemeLoaded) return <div className="loading-screen">Loading...</div>;
 
 
 // Default message body for the email
-const defaultEmailMessage = `Hello sir,\nI am writing to submit the analysis of the provided CSV file. I have reviewed the data and compiled insights which I believe will be useful for your evaluation. PFA.\n Best Regards,\n<strong>Jio Team </strong>`
-
-
-
+// Default message body for the email
+const defaultEmailMessage = `Dear user,\n\nThe attached report presents a structured analysis of the submitted CSV file. It highlights key trends, anomalies, and metrics that may assist in your assessment.\n\n<strong style="color: blue;">Note: This is a computer-generated email.</strong>`;
 
 // ----------------- EMAIL HANDLER -----------------
   const handleEmailSend = async () => {
@@ -201,7 +199,7 @@ const handleSubmit = async e => {
     setPptUrl(res.data.pptxUrl);
     setFilename(file.name); // Save original filename
     setSessionId(res.data.sessionId);
-    setSummaryStatus('✅ Analysis complete. Click below to view graphs.');
+    setSummaryStatus('✅ Analysis complete.');
     setEmailStatus('');
 
 // ✅ Immediately fetch and show summary

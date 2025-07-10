@@ -70,7 +70,7 @@ router.post('/send', async (req, res) => {
       analysisType,
       sessionDir,
       selectedCharts,
-      filename // ✅ Pass filename for PPTX attachment
+      filename //  Pass filename for PPTX attachment
     }));
 
     html = `<div style="margin-bottom: 1em;">${customMessage}</div>` + html;
