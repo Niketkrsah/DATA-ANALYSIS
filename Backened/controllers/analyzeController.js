@@ -58,7 +58,7 @@ exports.analyzeByUpload = async (req, res) => {
   }
 
   const outputRoot = path.join(__dirname, '../output');
-  await cleanupOldSessions(outputRoot,  60 * 1000,[req.sessionId]);
+  await cleanupOldSessions(outputRoot, 2 * 60 * 60 * 1000,[req.sessionId]);
 
   runPython(uploadedPath, originalName, type, sessionPath, res);
 };
