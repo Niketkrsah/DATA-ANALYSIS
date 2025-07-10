@@ -9,6 +9,7 @@ import warnings
 from pptx import Presentation
 from pptx.util import Inches
 import textwrap
+import ast
 
 # === Configs ===
 matplotlib.rcParams["font.family"] = "Segoe UI Emoji"
@@ -48,7 +49,7 @@ def run_crash_analysis(input_csv, output_dir):
                 "Error Name": extract(r"code -?\d+ \((.*?)\)", log),
                 "Error Code": int(extract(r"code (-?\d+)", log) or -1),
                 "Build": extract(r"Build fingerprint: '(.*?)'", log),
-                "Libraries (Backtrace)": " → ".join(re.findall(r"#\d+\s+pc .*?\s+(.*?)\s", log)[:3]) or "N/A"
+                "Libraries (Backtrace)": " → ".join(re.findall(r"#\d+\s+pc .*?\s+(.*?)\s",log))
             })
         return pd.DataFrame(rows)
 
@@ -60,6 +61,13 @@ def run_crash_analysis(input_csv, output_dir):
 
     def wrap_labels(series, width=30):
         return series.rename(lambda label: "\n".join(textwrap.wrap(label, width)))
+    
+    def top5_bar(colname, title, xlabel, filename, df, img_dir, summary):
+        if colname in df.columns:
+            vc = df[colname].value_counts().head(10)
+            bar_chart(vc, title, xlabel, filename, img_dir)
+            summary[title] = vc.to_dict()
+
 
     def bar_chart(series, title, xlabel, name, img_dir, horizontal=False):
         series = wrap_labels(series,width=100)
@@ -136,7 +144,7 @@ def run_crash_analysis(input_csv, output_dir):
             summary["Top Error Types"] = vc.to_dict()
 
         if "Libraries (Backtrace)" in parsed:
-            vc = parsed["Libraries (Backtrace)"].value_counts().head(10)
+            vc = parsed["Libraries (Backtrace)"].value_counts().head(5)
             bar_chart(vc, "Top Backtrace Chains", "Backtrace", "top_backtrace_chain", img_dir, horizontal=True)
             summary["Top Backtrace Chains"] = vc.to_dict()
 
@@ -185,6 +193,101 @@ def run_crash_analysis(input_csv, output_dir):
         vc = df["State"].value_counts()
         bar_chart(vc, "Crashes by State", "State", "by_state", img_dir)
         summary["Crashes by State"] = vc.to_dict()
+    # Extract Available Memory from Mi 4 column
+    if "Mi 4" in df.columns:
+        def extract_available_memory(val):
+            try:
+                return json.loads(val).get("available", 0)
+            except:
+                return 0
+
+        df["Available Memory"] = df["Mi 4"].apply(extract_available_memory)
+        bins = [100, 400, 800, 1000, 1200, 1400, 2000]
+        labels = ["100-400", "400-800", "800-1000", "1000-1200", "1200-1400", "1600-2000"]
+        df["Memory Range"] = pd.cut(df["Available Memory"], bins=bins, labels=labels, include_lowest=True)
+
+        vc = df["Memory Range"].value_counts().sort_index()
+        bar_chart(vc, "Memory Availability Distribution", "Range (MB)", "memory_ranges", img_dir)
+        summary["Memory Ranges"] = vc.to_dict()
+    # === Acs Odu Serial Number & Model ===
+    if "Acs Odu Serial Number" in df.columns:
+        vc = df["Acs Odu Serial Number"].value_counts().nlargest(10)
+        bar_chart(vc, "Top ODU Serial Numbers", "ODU Serial", "odu_serial_top10", img_dir)
+        summary["Top ODU Serial Numbers"] = vc.to_dict()
+
+    if "Acs Odu Model" in df.columns:
+        vc = df["Acs Odu Model"].value_counts().nlargest(10)
+        bar_chart(vc, "Top ODU Models", "ODU Model", "odu_model_top10", img_dir)
+        summary["Top ODU Models"] = vc.to_dict()
+
+    # === Customer, Plan, GIS Metadata ===
+    top5_bar("D Customer Product Type", "Top Customer Product Types", "Product Type", "cust_product_types", df, img_dir, summary)
+    top5_bar("D Plan Status", "Top Plan Status Types", "Plan Status", "plan_status", df, img_dir, summary)
+    top5_bar("Gis Building Id", "Top GIS Building IDs", "Building ID", "gis_building_ids", df, img_dir, summary)
+    top5_bar("Gis City", "Top Cities by Crash", "City", "gis_city", df, img_dir, summary)
+    top5_bar("Gis Ont Serial Number", "Top GIS ONT Serial Numbers", "ONT Serial", "gis_ont_serials", df, img_dir, summary)
+
+    def parse_as5_column(df):
+        parsed_data = []
+    
+        if "As 5" not in df.columns:
+            return pd.DataFrame()
+
+        for raw in df["As 5"].dropna():
+            try:
+                entry_list = ast.literal_eval(raw)
+                if isinstance(entry_list, list) and entry_list:
+                    item = entry_list[0]
+                    ps21 = item.get("PS21")
+                    ps22 = item.get("PS22", "")
+                    xps46 = item.get("XPS46")
+                    xps911 = item.get("XPS911")
+
+                    # Timestamp
+                    timestamp = re.search(r'Timestamp:\s*(.*?)\s+pid', ps22)
+                    timestamp = timestamp.group(1) if timestamp else None
+
+                    # First Faulting Library
+                    fault_lib = None
+                    backtrace = re.findall(r'#\d+\s+pc .*?/(lib\w+\.so)', ps22)
+                    if backtrace:
+                        fault_lib = backtrace[0]
+
+                    thread_name = None
+                    thread_match = re.search(r'name:\s*(.*?)\s+>>>', ps22)
+                    if thread_match:
+                         thread_name = thread_match.group(1).strip()
+
+                    parsed_data.append({
+                        "App": ps21,
+                        "Timestamp": timestamp,
+                        "Firmware": xps46,
+                        "Subtype": xps911,
+                        "Top Lib": fault_lib,
+                        "Thread Name": thread_name  
+                    })
+
+            except Exception as e:
+                continue
+
+        return pd.DataFrame(parsed_data)
+    parsed_as5 = parse_as5_column(df)
+
+    if not parsed_as5.empty:
+            # ───── Firmware Distribution ─────
+            vc_firmware = parsed_as5["Firmware"].value_counts().head(10)
+            bar_chart(vc_firmware, "App Version", "Firmware", "as5_firmware", img_dir)
+            summary["App version"] = vc_firmware.to_dict()
+
+            # ───── Top Faulting Libraries ─────
+            vc_libs = parsed_as5["Top Lib"].dropna().value_counts().head(10)
+            bar_chart(vc_libs, "Top Faulting Libraries (As 5)", "Library", "as5_fault_libs", img_dir)
+            summary["Top Faulting Libraries (As 5)"] = vc_libs.to_dict()
+
+            
+            vc_name = parsed_as5["Thread Name"].value_counts().head(10)
+            bar_chart(vc_name, "Top Crashing Threads", "Thread Name", "top_threads", img_dir)
+            summary["Top Crashing Threads"]= vc_name.to_dict()
 
 
 # ─────────────── Export Outputs ───────────────

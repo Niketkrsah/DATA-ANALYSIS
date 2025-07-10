@@ -9,7 +9,18 @@ const titleToFilenameMap = {
     "Top STB Serial Numbers": "STB_Serial_NO.png",
     "Top STB Models": "STB_Model.png",
     "Faulting Libraries": "faulting_libraries.png",
-    "Crashes by State": "by_state.png"
+    "Crashes by State": "by_state.png",
+    "Memory Ranges": "memory_ranges.png",
+    "Top ODU Serial Numbers": "odu_serial_top10.png",
+    "Top ODU Models": "odu_model_top10.png",
+    "Top Customer Product Types": "cust_product_types.png",
+    "Top Plan Status Types": "plan_status.png",
+    "Top GIS Building IDs": "gis_building_ids.png",
+    "Top Cities by Crash": "gis_city.png",
+    "Top GIS ONT Serial Numbers": "gis_ont_serials.png",
+    "App version": "as5_firmware.png",
+    "Top Faulting Libraries (As 5)": "as5_fault_libs.png",
+    "Top Crashing Threads": "top_threads.png"
   },
   anr: {
     "Top ANR Activities": "top_anr_activities.jpg",
