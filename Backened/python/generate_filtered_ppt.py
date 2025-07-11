@@ -46,7 +46,11 @@ filtered_titles = sys.argv[3].split(';;')
 pptx_filename = sys.argv[4]
 
 image_dir = os.path.join(session_dir, f"{analysis_type}_images")
-pptx_path = os.path.join(session_dir, pptx_filename)
+emailppt_dir = os.path.join(session_dir, "emailppt")
+
+# Create the directory if it doesn't exist
+os.makedirs(emailppt_dir, exist_ok=True)  
+pptx_path = os.path.join(emailppt_dir, pptx_filename)
 
 #  Choose correct mapping
 title_to_filename = crash_map if analysis_type == "crash" else anr_map

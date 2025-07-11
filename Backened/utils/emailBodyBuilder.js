@@ -140,14 +140,14 @@ function buildEmailBody({ jsonPath, includeAscii, includeTable, includePpt, incl
   const rawData = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
   const summaryData = rawData.summary || rawData; // ✅ Support both formats
   let filteredSummary = summaryData;
-if (Array.isArray(selectedCharts) && selectedCharts.length > 0) {
-  filteredSummary = {};
-  selectedCharts.forEach(title => {
-    if (summaryData[title]) {
-      filteredSummary[title] = summaryData[title];
-    }
-  });
-}
+  if (Array.isArray(selectedCharts) && selectedCharts.length > 0) {
+    filteredSummary = {};
+    selectedCharts.forEach(title => {
+      if (summaryData[title]) {
+        filteredSummary[title] = summaryData[title];
+      }
+    });
+  }
 
 
   const imageDir = path.join(path.dirname(jsonPath), `${analysisType}_images`);
@@ -156,34 +156,34 @@ if (Array.isArray(selectedCharts) && selectedCharts.length > 0) {
   let attachments = [];
 
  for (const [section, data] of Object.entries(filteredSummary)) {
-  const isNumeric = typeof data === 'object' && !Array.isArray(data) && Object.values(data).every(v => typeof v === 'number');
+    const isNumeric = typeof data === 'object' && !Array.isArray(data) && Object.values(data).every(v => typeof v === 'number');
 
-  if (includeAscii && isNumeric) {
-    html += generateAsciiBarChart(data, section);
-  }
+    if (includeAscii && isNumeric) {
+      html += generateAsciiBarChart(data, section);
+    }
 
-  if (includeTable) {
-    html += generateHtmlTable(data, section);
+    if (includeTable) {
+      html += generateHtmlTable(data, section);
+    }
   }
-}
 
 
   if (includeImages) {
-  let wantedImages = null;
-  if (selectedCharts.length > 0) {
-  const mapping = titleToFilenameMap[analysisType] || {};
-  wantedImages = selectedCharts.map(title => {
-  const file = mapping[title];
-  if (!file) console.warn(`⚠️ Missing image mapping for title "${title}" in ${analysisType}`);
-  return file;
-}).filter(Boolean);
+    let wantedImages = null;
+    if (selectedCharts.length > 0) {
+    const mapping = titleToFilenameMap[analysisType] || {};
+    wantedImages = selectedCharts.map(title => {
+    const file = mapping[title];
+    if (!file) console.warn(`⚠️ Missing image mapping for title "${title}" in ${analysisType}`);
+    return file;
+  }).filter(Boolean);
 
+    }
+
+    const imageBlock = generateImageEmbeds(imageDir, wantedImages);
+    html += imageBlock.html;
+    attachments = attachments.concat(imageBlock.attachments);
   }
-
-  const imageBlock = generateImageEmbeds(imageDir, wantedImages);
-  html += imageBlock.html;
-  attachments = attachments.concat(imageBlock.attachments);
-}
 
 
   //
@@ -195,32 +195,58 @@ if (Array.isArray(selectedCharts) && selectedCharts.length > 0) {
   // 🎯 PPT generation with filtered charts and uploaded filename
 
 
-  
-  if (includePpt && selectedCharts.length > 0) {
-    const execSync = require('child_process').execSync;
-    const filteredTitles = selectedCharts.join(';;');
-    const outputPptFilename = filename.replace(/\.csv$/i, '.pptx');
-    const pythonScript = path.join( 'python', 'generate_filtered_ppt.py');
 
+    if (includePpt) {
+      const outputPptFilename = filename.replace(/\.csv$/i, '.pptx');
+      const fullPptPath = path.join(sessionDir, outputPptFilename);
 
-    try {
-      execSync(`py "${pythonScript}" "${sessionDir}" "${analysisType}" "${filteredTitles}" "${outputPptFilename}"`, {
-        stdio: 'inherit'
-      });
+      if (selectedCharts.length === 0) {
+        // 📎 Attach full pre-generated PPT
+        if (fs.existsSync(fullPptPath)) {
+          const fileBuffer = fs.readFileSync(fullPptPath);
+          attachments.push({
+            filename: outputPptFilename,
+            content: fileBuffer
+          });
+          console.log('📎 Attached full PPT:', fullPptPath);
+        } else {
+          console.warn('⚠️ Full PPTX not found:', fullPptPath);
+        }
 
-      const pptxPath = path.join(sessionDir, outputPptFilename);
-      if (fs.existsSync(pptxPath)) {
-        attachments.push({
-          filename: outputPptFilename,
-          path: pptxPath
-        });
       } else {
-        console.warn('⚠️ PPTX not found after generation:', pptxPath);
-      }
-    } catch (err) {
-      console.warn('⚠️ PPT generation failed:', err.message);
-    }
+        // 🛠️ Generate filtered PPT
+        const filteredTitles = selectedCharts.join(';;');
+        const pythonScript = path.join('python', 'generate_filtered_ppt.py');
+        const filteredPptPath = path.join(sessionDir, 'emailppt', outputPptFilename);
+
+        try {
+          const execSync = require('child_process').execSync;
+          execSync(`py "${pythonScript}" "${sessionDir}" "${analysisType}" "${filteredTitles}" "${outputPptFilename}"`, {
+          stdio: 'inherit'
+          });
+
+          if (fs.existsSync(filteredPptPath)) {
+            const fileBuffer = fs.readFileSync(filteredPptPath);
+            attachments.push({
+              filename: outputPptFilename,
+              content: fileBuffer
+            });
+            console.log('📎 Attached filtered PPT:', filteredPptPath);
+
+          // 🧹 Cleanup only filtered PPT
+            fs.unlink(filteredPptPath, err => {
+              if (err) console.warn('⚠️ Failed to delete filtered PPT:', err.message);
+              else console.log('🗑️ Deleted filtered PPT after attach:', filteredPptPath);
+            });
+            } else {
+             console.warn('⚠️ Filtered PPTX not found:', filteredPptPath);
+               }
+          } catch (err) {
+              console.warn('⚠️ Filtered PPT generation failed:', err.message);
+            }
+         }
   }
+
 
 
 

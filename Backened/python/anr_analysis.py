@@ -120,6 +120,10 @@ def run_anr_analysis(input_csv, output_dir):
     hourly = df["Event Hour"].value_counts().sort_index()
     fig, ax = plt.subplots(figsize=(10, 6))
     hourly.plot(kind="line", marker='o', ax=ax, color="blue")
+         #  Annotate each point with its count
+    for x, y in zip(hourly.index, hourly.values):
+        ax.annotate(str(y), (x, y + 30), ha='center', fontsize=9)
+
     ax.set_title("ANR Occurrences by Hour of Day")
     ax.set_xlabel("Hour")
     ax.set_ylabel("Count")
